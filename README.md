@@ -177,6 +177,7 @@ flowchart LR
 | Read the protocol design and scope | [OP_DROP design](docs/why-op-drop.md) |
 | Publish a launch or community message | [Messaging kit](docs/messaging-kit.md) |
 | Integrate OP_DROP into a product | [Integration checklist](docs/integration-checklist.md) |
+| Contribute a rule, guide, or integration | [Contributing](CONTRIBUTING.md) |
 
 ## `$DROP` in one minute
 

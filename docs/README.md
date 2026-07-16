@@ -126,6 +126,7 @@ flowchart LR
 | Read the protocol design and scope | [OP_DROP design](why-op-drop.md) |
 | Publish a launch or community message | [Messaging kit](messaging-kit.md) |
 | Integrate OP_DROP into a product | [Integration checklist](integration-checklist.md) |
+| Contribute a rule, guide, or integration | [Contributing](../CONTRIBUTING.md) |
 
 ## The words you will see
 
