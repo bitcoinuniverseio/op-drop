@@ -179,6 +179,12 @@ flowchart LR
 | Integrate OP_DROP into a product | [Integration checklist](docs/integration-checklist.md) |
 | Contribute a rule, guide, or integration | [Contributing](CONTRIBUTING.md) |
 
+Validate documentation changes locally with:
+
+```powershell
+./scripts/validate-docs.ps1
+```
+
 ## `$DROP` in one minute
 
 `$DROP` is the display name for the OP_DROP ticker `drop`.

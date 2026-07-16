@@ -80,5 +80,13 @@ behavior without guessing. A contribution is especially strong when it also
 gives users a better preview, a clearer confirmation boundary, or a more useful
 reason for an invalid event.
 
+Before opening a change, run the repository validator:
+
+```powershell
+./scripts/validate-docs.ps1
+```
+
+It checks every Markdown file for broken relative links and em-dash characters.
+
 **Come on board early. Read the contract, improve the evidence path, and help
 make Bitcoin token infrastructure worthy of the settlement layer beneath it.**
