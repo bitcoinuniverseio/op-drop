@@ -6,8 +6,8 @@
 
 ## Start with the promise
 
-OP_DROP changes the experience from “something that looks like a token event”
-to “a defined event that the transaction and the rules prove.” Every action is
+OP_DROP changes the experience from "something that looks like a token event"
+to "a defined event that the transaction and the rules prove." Every action is
 previewed, confirmed, checked, and exposed through one public state model.
 
 ### Highlights for users
@@ -125,6 +125,7 @@ flowchart LR
 | Understand the BIP-110 READY badge | [BIP-110 READY](guides/bip110-compatibility.md) |
 | Read the protocol design and scope | [OP_DROP design](why-op-drop.md) |
 | Publish a launch or community message | [Messaging kit](messaging-kit.md) |
+| Integrate OP_DROP into a product | [Integration checklist](integration-checklist.md) |
 
 ## The words you will see
 

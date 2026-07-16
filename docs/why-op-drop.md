@@ -22,7 +22,7 @@ user to understand before signing.
 ### What is changing
 
 - From loose inscription conventions to an explicit application contract.
-- From “pending looks like ownership” to confirmation-first accounting.
+- From "pending looks like ownership" to confirmation-first accounting.
 - From hidden transfer transitions to visible reservation and settlement.
 - From indexer-specific guesses to published rules and reproducible state.
 - From protocol name confusion to a deliberate boundary around OP_DROP.

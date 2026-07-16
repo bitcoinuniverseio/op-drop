@@ -23,7 +23,7 @@ confirmed OP_DROP state.
 
 ## Purpose and scope
 
-OP_DROP is changing the default from “the indexer says so” to a documented,
+OP_DROP is changing the default from "the indexer says so" to a documented,
 reproducible decision path. A user can follow the event from exact text to
 confirmation to ledger result. A builder can implement the same checks. An
 indexer can show why an event was accepted or rejected.

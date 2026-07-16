@@ -176,6 +176,7 @@ flowchart LR
 | Read the exact event format | [Event rules](docs/protocols/op-drop-json.md) |
 | Read the protocol design and scope | [OP_DROP design](docs/why-op-drop.md) |
 | Publish a launch or community message | [Messaging kit](docs/messaging-kit.md) |
+| Integrate OP_DROP into a product | [Integration checklist](docs/integration-checklist.md) |
 
 ## `$DROP` in one minute
 

@@ -13,6 +13,7 @@ These guides cover creating OP_DROP actions and reading their confirmed state.
 | [BIP-110 scope](bip110-compatibility.md) | Understanding what the BIP-110 READY badge means and does not mean. |
 | [OP_DROP design](../why-op-drop.md) | The protocol design, scope, and relationship to Bitcoin data limits. |
 | [Messaging kit](../messaging-kit.md) | Copy-ready user, creator, builder, and community launch messages. |
+| [Integration checklist](../integration-checklist.md) | Production checks for wallets, explorers, indexers, and marketplaces. |
 
 For the complete decision rules behind the interface, read the
 [OP_DROP indexing rules](../indexing-rules.md).
