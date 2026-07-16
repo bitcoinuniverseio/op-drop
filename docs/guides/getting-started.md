@@ -1,5 +1,13 @@
 # Get started with OP_DROP
 
+> **Welcome to the next generation of Bitcoin-native token activity.** OP_DROP
+> gives you a simple loop: preview the exact action, sign what you understand,
+> wait for confirmation, and verify the resulting state.
+
+> **Why come on board now:** the communities that adopt clear, verifiable
+> Bitcoin token habits early can help shape the tools and standards everyone
+> uses next. Move fast, but never skip the preview or confirmation boundary.
+
 You do not need protocol knowledge to use OP_DROP. Think of it this way:
 
 - **Deploy** means setting the rules for a new token.

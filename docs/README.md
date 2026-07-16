@@ -1,5 +1,46 @@
 # OP_DROP documentation
 
+> **Bitcoin tokens are entering their next phase.** OP_DROP is a focused,
+> Bitcoin-native protocol for compact events, deterministic rules, and confirmed
+> state that users and builders can inspect together.
+
+## Start with the promise
+
+OP_DROP changes the experience from “something that looks like a token event”
+to “a defined event that the transaction and the rules prove.” Every action is
+previewed, confirmed, checked, and exposed through one public state model.
+
+### Highlights for users
+
+- **See exactly what you sign:** the compact event is readable before approval.
+- **Know what counts:** pending activity never appears as a confirmed balance.
+- **Follow the lifecycle:** transfers show available, reserved, settled, or
+  returned units.
+- **Use one source of truth:** Explorer and Portfolio follow the same confirmed
+  OP_DROP record.
+
+### Highlights for builders
+
+- **Integrate a contract, not folklore:** canonical event text and decision rules
+  are documented.
+- **Build Bitcoin-native tools:** wallets, explorers, marketplaces, and indexers
+  can work from the same confirmed state model.
+- **Keep the protocol legible:** compact events reduce ambiguity and make testing
+  practical.
+
+## What is changing in Bitcoin inscriptions
+
+| Ecosystem habit | OP_DROP approach |
+| --- | --- |
+| Tickers and payloads are interpreted by convention. | Exact events define identity and intent. |
+| Pending activity is easy to mistake for ownership. | Confirmation is a hard boundary for accounting. |
+| Transfer state is often invisible between sender and receiver. | Reservation and settlement are explicit. |
+| Protocol names and carrier details become conflated. | User protocol identity remains separate from technical construction details. |
+
+**The future belongs to Bitcoin token protocols that can be read by a person,
+validated by software, and settled by the chain. OP_DROP is an invitation to help
+build that future now.**
+
 ## How OP_DROP records token activity
 
 OP_DROP uses one compact, exact event and turns it into confirmed public state.
@@ -83,6 +124,7 @@ flowchart LR
 | Check the exact data you are signing | [OP_DROP event rules](protocols/op-drop-json.md) |
 | Understand the BIP-110 READY badge | [BIP-110 READY](guides/bip110-compatibility.md) |
 | Read the protocol design and scope | [OP_DROP design](why-op-drop.md) |
+| Publish a launch or community message | [Messaging kit](messaging-kit.md) |
 
 ## The words you will see
 

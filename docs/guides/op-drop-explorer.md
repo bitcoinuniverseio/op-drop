@@ -1,5 +1,10 @@
 # OP_DROP Explorer and Portfolio
 
+> **The explorer is where the future becomes visible.** OP_DROP turns raw
+> Bitcoin activity into a readable confirmation-first record, so users can see
+> what settled, communities can follow a launch, and builders can prove what
+> their tools are showing.
+
 Explorer and Portfolio are the app's read-only view of confirmed OP_DROP state.
 They show confirmed results, not an estimate, a pending order, or a generic
 BRC-20 balance.
@@ -9,6 +14,19 @@ Portfolio show what has become confirmed OP_DROP state.
 
 Explorer reports confirmed `op-drop` activity. Another wallet, marketplace,
 miner, or indexer can use different rules or display a different result.
+
+## The user-facing change
+
+OP_DROP is designed to make the evidence path obvious:
+
+```text
+exact event -> Bitcoin confirmation -> rule validation -> public state
+```
+
+That means a pending action is not presented as a balance, a reserved transfer
+is not hidden, and an invalid event can be explained instead of silently ignored.
+This clarity is how new users can come on board quickly without being asked to
+trust what they cannot inspect.
 
 ## The two ways to read OP_DROP
 

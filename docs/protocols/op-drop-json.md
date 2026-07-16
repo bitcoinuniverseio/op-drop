@@ -1,5 +1,9 @@
 # OP_DROP event format
 
+> **The public contract for the next generation of Bitcoin token events.**
+> Compact JSON gives users something they can read before signing and gives
+> builders something they can validate byte for byte.
+
 This page defines the JSON accepted as an OP_DROP event. The protocol field is
 always <code>"p":"op-drop"</code>.
 
@@ -17,6 +21,14 @@ or values produce a different event.
 temporary deployment if activated. This document defines event text and
 confirmed-balance rules. It does not guarantee activation, relay, mining,
 wallet support, marketplace support, or adoption by another indexer.
+
+## Why this contract matters
+
+Bitcoin inscriptions should not depend on a ticker, a screenshot, or an
+indexer's private guess. OP_DROP gives each event a strict identity, applies it
+only after confirmation, and makes the resulting supply and balances follow one
+public rulebook. That is the foundation we believe Bitcoin-native tokens need to
+scale with clarity.
 
 ## 1. Identity and scope
 

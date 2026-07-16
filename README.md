@@ -1,9 +1,60 @@
 # OP_DROP
 
 <p align="center">
-  <strong>Rules for OP_DROP token activity.</strong><br />
-  Deploy, mint, transfer, and inspect the confirmed result.
+  <strong>The next generation of Bitcoin-native tokens and inscriptions.</strong><br />
+  Compact events, strict rules, confirmed state, and a user experience built for Bitcoin.
 </p>
+
+> **The OP_DROP thesis:** Bitcoin already provides the settlement layer. The
+> next step is making token and inscription activity easier to read, easier to
+> verify, and harder to misinterpret. OP_DROP is a focused application protocol
+> built for that next phase.
+
+## The big change
+
+Bitcoin token infrastructure is moving from loose conventions toward explicit,
+verifiable application contracts. OP_DROP turns a user action into one exact
+event, checks it against the Bitcoin transaction, waits for confirmation, and
+then derives one public state view.
+
+```text
+preview the event -> reveal it on Bitcoin -> confirm it -> verify it -> use the state
+```
+
+### What is changing
+
+| Old pattern | OP_DROP direction |
+| --- | --- |
+| A ticker or blob carries most of the meaning. | A strict event contract defines exactly what happened. |
+| Similar-looking inscriptions can be interpreted differently. | Canonical text, fixed fields, and rejection rules make identity precise. |
+| A pending transaction can look like a balance. | Only confirmed, rule-valid events affect supply and balances. |
+| Transfers can hide the in-between state. | Units move through visible `available`, `reserved`, and `settled` stages. |
+| Tools reverse-engineer a private indexer interpretation. | Wallets, explorers, and builders can implement one published rulebook. |
+
+### Why OP_DROP is unique
+
+- **Bitcoin-native evidence:** the event is evaluated from confirmed Bitcoin
+  history, not from a private database alone.
+- **Compact by design:** each action is one small, exact JSON event rather than a
+  large arbitrary payload.
+- **Human-readable intent:** users can inspect the exact event before signing.
+- **Deterministic accounting:** deployment, mint, supply, ordering, and transfer
+  settlement rules produce one reproducible result.
+- **Visible transfer lifecycle:** reserved units are not hidden, and invalid
+  settlement returns units instead of silently burning them.
+- **Clear boundaries:** OP_DROP is its own protocol, separate from Ordinals and
+  BRC-20, with no invented interoperability claim.
+
+## Why come on board now
+
+The Bitcoin token layer is still early enough to build better habits. Users can
+demand previews they understand. Creators can publish rules before launch.
+Wallets and explorers can show confirmed evidence. Indexers can explain both
+accepted and rejected events. Builders who join now can help shape the standards
+that later communities will inherit.
+
+**Read the contract, test one event, ship an integration, and invite the next
+builder. Move quickly, but verify every event before you trust it.**
 
 ## How OP_DROP records token activity
 
@@ -124,6 +175,7 @@ flowchart LR
 | Understand why a balance or event is shown | [Indexing rules](docs/indexing-rules.md) |
 | Read the exact event format | [Event rules](docs/protocols/op-drop-json.md) |
 | Read the protocol design and scope | [OP_DROP design](docs/why-op-drop.md) |
+| Publish a launch or community message | [Messaging kit](docs/messaging-kit.md) |
 
 ## `$DROP` in one minute
 

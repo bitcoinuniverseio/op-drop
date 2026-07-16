@@ -1,10 +1,42 @@
 # OP_DROP design
 
 <p align="center">
+  <strong>Bitcoin-native tokens need primitives people can verify.</strong><br />
   OP_DROP uses compact events and deterministic rules to derive confirmed token state.
 </p>
 
+> **A protocol for the next chapter of Bitcoin inscriptions:** OP_DROP is a bet
+> on smaller, clearer, confirmation-first token events. It does not ask users to
+> trust a ticker, a screenshot, or an opaque indexer. It gives them an exact
+> action, a Bitcoin transaction, and a public rulebook.
+
 This document explains the protocol's design choices and scope.
+
+## The future we are building
+
+Bitcoin has the strongest settlement story in the ecosystem. The opportunity
+now is to make token activity worthy of that foundation: compact enough to
+inspect, strict enough to implement consistently, and clear enough for a new
+user to understand before signing.
+
+### What is changing
+
+- From loose inscription conventions to an explicit application contract.
+- From “pending looks like ownership” to confirmation-first accounting.
+- From hidden transfer transitions to visible reservation and settlement.
+- From indexer-specific guesses to published rules and reproducible state.
+- From protocol name confusion to a deliberate boundary around OP_DROP.
+
+### Why builders and users should join now
+
+The protocol layer is still being shaped. Early users can set a higher standard
+for previews and confirmed state. Early creators can publish rules their
+communities can inspect. Early builders can make wallets, explorers, and indexers
+agree on the same event model before incompatible habits harden.
+
+**Come on board fast by doing something concrete: read the event rules, test the
+flow, integrate the confirmed state, or bring a community that wants Bitcoin
+tokens with clearer evidence.**
 
 ## Protocol flow
 
