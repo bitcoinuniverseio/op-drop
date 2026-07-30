@@ -7,7 +7,7 @@
 
 > **Why this matters:** the future of Bitcoin tokens depends on the difference
 > between an observed transaction and a proven state transition. These rules
-> make that difference visible to holders, builders, and operators.
+> make that difference visible to anyone reading a balance or event.
 
 OP_DROP state is based on confirmed blockchain history and the rules in this
 document. A preview, pending transaction, or another protocol's balance is not
@@ -24,9 +24,8 @@ confirmed OP_DROP state.
 ## Purpose and scope
 
 OP_DROP is changing the default from "the indexer says so" to a documented,
-reproducible decision path. A user can follow the event from exact text to
-confirmation to ledger result. A builder can implement the same checks. An
-indexer can show why an event was accepted or rejected.
+reproducible decision path. You can follow the event from exact text to
+confirmation to ledger result, including why it was accepted or rejected.
 
 This document explains exactly how the OP_DROP confirmed view is calculated for
 Explorer and Portfolio. It is written for holders, traders, collectors, and

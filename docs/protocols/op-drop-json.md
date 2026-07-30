@@ -1,8 +1,8 @@
 # OP_DROP event format
 
 > **The public contract for the next generation of Bitcoin token events.**
-> Compact JSON gives users something they can read before signing and gives
-> builders something they can validate byte for byte.
+> Compact JSON gives you something exact to read before signing and recognize
+> again after confirmation.
 
 This page defines the JSON accepted as an OP_DROP event. The protocol field is
 always <code>"p":"op-drop"</code>.

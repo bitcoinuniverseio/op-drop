@@ -1,8 +1,8 @@
 # BIP-110 and OP_DROP
 
-> **Build for the future, describe the present accurately.** OP_DROP uses a
-> compact, narrow, BIP-110-aware transaction profile to give Bitcoin token
-> builders a focused design. The profile is an application choice. It is not a
+> **Understand the badge without overreading it.** OP_DROP uses a compact,
+> narrow, BIP-110-aware transaction profile. The profile is an application
+> choice. It is not a
 > claim that BIP-110 is active or that every Bitcoin service will recognize it.
 
 <p align="center">
@@ -41,8 +41,8 @@ rules decide whether BIP-110 is active.
 
 The important change is discipline at the carrier layer: keep the event small,
 keep the transaction profile explicit, and validate before counting. This gives
-users a clearer signing experience and gives builders a stable target while the
-Bitcoin inscription ecosystem continues to evolve.
+users a clearer signing experience while the Bitcoin inscription ecosystem
+continues to evolve.
 
 Each OP_DROP action is one exact event with defined meaning.
 
@@ -115,7 +115,7 @@ It does **not** mean:
 - another wallet, marketplace, miner, or indexer will use OP_DROP rules; or
 - OP_DROP overrides Bitcoin consensus rules.
 
-## A practical user checklist
+## Before you rely on an OP_DROP action
 
 Before relying on an OP_DROP action:
 

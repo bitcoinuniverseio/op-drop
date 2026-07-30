@@ -27,16 +27,15 @@ user to understand before signing.
 - From indexer-specific guesses to published rules and reproducible state.
 - From protocol name confusion to a deliberate boundary around OP_DROP.
 
-### Why builders and users should join now
+### Why clear evidence matters now
 
-The protocol layer is still being shaped. Early users can set a higher standard
-for previews and confirmed state. Early creators can publish rules their
-communities can inspect. Early builders can make wallets, explorers, and indexers
-agree on the same event model before incompatible habits harden.
+Users can set a higher standard for previews and confirmed state. Creators can
+publish rules their communities can inspect. Wallets and explorers can make the
+same event easier to follow from signature to confirmed result.
 
-**Come on board fast by doing something concrete: read the event rules, test the
-flow, integrate the confirmed state, or bring a community that wants Bitcoin
-tokens with clearer evidence.**
+**Start with something concrete: read the event, try the flow with an amount you
+understand, and bring a community that wants Bitcoin tokens with clearer
+evidence.**
 
 ## Protocol flow
 
@@ -133,7 +132,7 @@ flowchart LR
   A[Smaller events] --> B[Readable user intent]
   B --> C[Stricter validation]
   C --> D[More legible token state]
-  D --> E[Better tools for users and builders]
+  D --> E[Clearer experiences for everyone]
 ```
 
 This is an application design choice, not a prediction about Bitcoin consensus,
