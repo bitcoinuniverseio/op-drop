@@ -4,8 +4,8 @@
 > the next wave of Bitcoin-native tokens and inscriptions: compact actions,
 > strict validation, deterministic accounting, and confirmed state.
 
-**Read the contract, test the vectors, and come on board early.** The goal is a
-token layer that users can understand and tools can verify without guessing.
+**Read the event, follow the rules, and verify the confirmed result.** The goal
+is a token layer people can understand without guessing.
 
 Use these pages to check the event format and the rules used to derive
 confirmed OP_DROP state.

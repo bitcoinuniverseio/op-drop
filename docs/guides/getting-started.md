@@ -4,9 +4,7 @@
 > gives you a simple loop: preview the exact action, sign what you understand,
 > wait for confirmation, and verify the resulting state.
 
-> **Why come on board now:** the communities that adopt clear, verifiable
-> Bitcoin token habits early can help shape the tools and standards everyone
-> uses next. Move fast, but never skip the preview or confirmation boundary.
+> **Your safest habit:** never skip the preview or the confirmation boundary.
 
 You do not need protocol knowledge to use OP_DROP. Think of it this way:
 
@@ -100,8 +98,8 @@ batch. That does not change the per-event `$DROP` limit. Smaller valid mints
 are allowed by the general ledger rules, so `21,000` is the count of full-limit
 mints, not a promise that every launch uses exactly that number of events.
 
-The checkout screen intentionally shows the total payable cost. It does not
-publish an internal fee breakdown.
+The checkout screen shows the total payable cost. Review that total and every
+wallet detail before approving the transaction.
 
 ## Transfer OP_DROP units
 
@@ -129,3 +127,10 @@ publish an internal fee breakdown.
 
 Use [Explorer and Portfolio](op-drop-explorer.md) for confirmed state and the
 [op-drop event rules](../protocols/op-drop-json.md) for the exact JSON format.
+
+## Keep control of every signature
+
+Never share a seed phrase or private key. Confirm the network, event text,
+destination, amount, and fee in a wallet you trust. A signed or pending action
+is not a confirmed balance, and confirmed Bitcoin transactions are difficult to
+reverse.

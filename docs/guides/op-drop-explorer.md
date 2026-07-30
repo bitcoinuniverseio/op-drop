@@ -1,9 +1,8 @@
 # OP_DROP Explorer and Portfolio
 
-> **The explorer is where the future becomes visible.** OP_DROP turns raw
-> Bitcoin activity into a readable confirmation-first record, so users can see
-> what settled, communities can follow a launch, and builders can prove what
-> their tools are showing.
+> **The explorer is where the result becomes visible.** OP_DROP turns raw
+> Bitcoin activity into a readable confirmation-first record, so you can see
+> what counted, what settled, and what still needs time.
 
 Explorer and Portfolio are the app's read-only view of confirmed OP_DROP state.
 They show confirmed results, not an estimate, a pending order, or a generic
