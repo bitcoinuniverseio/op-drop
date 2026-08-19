@@ -7,6 +7,12 @@
 
 OP_DROP turns deploy, mint, and transfer intent into one small event, checks it against its Bitcoin transaction, and applies it to a public confirmed-state record. Pending activity stays pending. Invalid activity stays out of balances. Transfers remain visible from reservation through settlement.
 
+The production read path is served by API-only replicas backed by one
+transactional ledger. A separate single-writer scanner verifies finalized
+blocks against two independently operated Bitcoin nodes. Maintenance and
+catch-up can therefore continue without presenting partial scanner work as
+confirmed state.
+
 ```text
 preview the event → sign intentionally → confirm on Bitcoin → verify the result
 ```
