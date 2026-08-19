@@ -14,6 +14,19 @@ Portfolio show what has become confirmed OP_DROP state.
 Explorer reports confirmed `op-drop` activity. Another wallet, marketplace,
 miner, or indexer can use different rules or display a different result.
 
+## Reliable confirmed reads
+
+Production explorer reads come from API-only replicas. They serve the last
+fully committed database state while the single-writer scanner validates new
+blocks, catches up, or performs an authenticated recovery. The scanner checks
+finalized hashes with two independently operated Bitcoin nodes before its
+cursor is considered synchronized. This separation prevents an incomplete
+block or a maintenance restart from becoming a user-visible balance update.
+
+During catch-up, the interface can report that state is warming up. Existing
+confirmed records remain readable, but new events should not be treated as
+admitted until synchronization and independent-node agreement are restored.
+
 ## The user-facing change
 
 OP_DROP is designed to make the evidence path obvious:
