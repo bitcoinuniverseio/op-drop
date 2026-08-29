@@ -56,7 +56,7 @@ flowchart LR
 
 Open **Explore** and select **op-drop**. The explorer desk provides:
 
-- `$DROP` terms and the canonical `drop` ticker;
+- `$DROP` terms and the authoritative `drop` ticker;
 - deployment state, mint progress, holder count, and recent confirmed events;
 - confirmation progress and clear empty, loading, partial, and retry states.
 

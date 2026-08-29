@@ -27,7 +27,7 @@ deployment would face these limits:
 | BIP-110 limit | Plain-English meaning | How OP_DROP responds |
 | --- | --- | --- |
 | Standard new outputs are at most 34 bytes, except limited `OP_RETURN` outputs | The long-term on-chain destination cannot carry a large data payload. | OP_DROP uses a compact native Taproot commitment output. |
-| Data pushes and witness arguments are at most 256 bytes | One event cannot be an oversized blob of arbitrary data. | OP_DROP uses one short, canonical JSON event. |
+| Data pushes and witness arguments are at most 256 bytes | One event cannot be an oversized blob of arbitrary data. | OP_DROP uses one short, authoritative JSON event. |
 | Undefined witness and Tapleaf versions cannot be spent | The protocol cannot rely on undefined upgrade paths. | OP_DROP stays within the defined, supported transaction profile. |
 | No Taproot annex | Extra annex data is not available. | OP_DROP does not use an annex. |
 | Taproot control blocks are at most 257 bytes | Deep or oversized script trees are constrained. | OP_DROP uses a shallow, single-leaf profile. |
