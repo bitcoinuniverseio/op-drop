@@ -60,7 +60,7 @@ state.
 The exact JSON text matters. Use the preview shown by the app without changing
 its spacing, key order, or values.
 
-All canonical JSON:
+All authoritative JSON:
 
 - is UTF-8;
 - has no whitespace outside string values;
@@ -146,7 +146,7 @@ is invalid even if it fits the remaining supply.
 
 `$DROP` is a display label. The wire ticker is `drop`.
 
-| Term | Canonical value |
+| Term | Authoritative value |
 | --- | ---: |
 | Maximum supply | `21000000` |
 | Mint limit | `1000` |

@@ -69,4 +69,4 @@ These terms affect state only after the `drop` deploy event is confirmed and acc
 
 ## Stay in control
 
-Never enter a seed phrase or private key into an OP_DROP page. Read the exact JSON preview and every wallet detail before approval. A preview, signature, or pending transaction is not a confirmed balance. Bitcoin transactions are difficult to reverse once confirmed, and another wallet or service may interpret token activity differently—use OP_DROP Explorer and Portfolio for this protocol's confirmed view.
+Never enter a seed phrase or private key into an OP_DROP page. Read the exact JSON preview and every wallet detail before approval. A preview, signature, or pending transaction is not a confirmed balance. Bitcoin transactions are difficult to reverse once confirmed, and another wallet or service may interpret token activity differently, use OP_DROP Explorer and Portfolio for this protocol's confirmed view.
