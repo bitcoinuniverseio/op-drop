@@ -51,6 +51,7 @@ The original markdown documents remain in the repository under `docs/` and are s
 - Output index 0 of the reveal is the anchor. Its address owns the event. For a transfer, spending that anchor settles it, and the address of output 0 of the settling transaction is the destination.
 - BIP-110 is a published proposal that is not active on Bitcoin. OP_DROP is built to stay inside its limits as a design constraint. A "BIP-110 ready" label means an application enforces that construction, nothing more.
 - Support outside Bitcoin Universe: none. No third-party wallet, explorer, marketplace, miner, or indexer recognises an OP_DROP event.
+- Support inside Bitcoin Universe is staged. The Core portfolio surface is ungated. The Core explorer sits behind the opDropIndex feature gate and Core marketplace trading behind opDropTrading, and both gates default to off, so a given deployment probably does not have them enabled.
 - BRC-20, Ordinals, and Bitcoin Stamps originated outside Bitcoin Universe. OP_DROP borrows accounting ideas that BRC-20 popularised and is otherwise unrelated to all three.
 
 ## Reporting

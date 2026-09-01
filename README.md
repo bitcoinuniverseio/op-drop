@@ -100,8 +100,10 @@ deploy event confirms and is accepted.
 
 Support claimed anywhere in this repository is limited to what can be verified in
 Bitcoin Universe's own source: the Inscribe workspace (deploy, mint, transfer), the
-Core explorer, the Core portfolio, and a feature-gated Core marketplace in
-external-execution mode where selling is explicitly unsupported.
+Core portfolio, a feature-gated Core explorer, and a feature-gated Core marketplace
+in external-execution mode where selling is explicitly unsupported. The explorer and
+marketplace gates both default to off, so assume a deployment does not have them
+enabled unless you can see that it does.
 
 Nothing outside Bitcoin Universe reads OP_DROP. No third-party wallet, explorer,
 marketplace, miner, or indexer recognises an OP_DROP event.
