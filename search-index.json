@@ -224,8 +224,8 @@
       "page": "Guide",
       "heading": "Support matrix",
       "url": "guide.html#support",
-      "text": "Inscribe workspace wired for deploy, mint, and transfer. Core explorer and portfolio wired. Core marketplace feature-gated behind opDropTrading in external-execution mode. Selling unsupported. No third-party support.",
-      "aliases": ["support matrix", "wallet support", "marketplace support", "opdroptrading", "feature gate", "compatibility"]
+      "text": "Inscribe workspace wired for deploy, mint, and transfer. Core portfolio wired. Core explorer feature-gated behind opDropIndex and Core marketplace behind opDropTrading, both off by default. Selling unsupported. No third-party support.",
+      "aliases": ["support matrix", "wallet support", "marketplace support", "opdroptrading", "opdropindex", "feature gate", "gated", "compatibility"]
     },
     {
       "page": "Guide",

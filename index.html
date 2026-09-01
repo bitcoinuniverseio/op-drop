@@ -337,9 +337,9 @@
         <thead><tr><th>Surface</th><th>Status</th><th>What it does</th></tr></thead>
         <tbody>
           <tr><td>Inscribe workspace</td><td><span class="badge ok">wired</span></td><td>Creates deploy, mint, and transfer events on the dedicated <a href="https://inscribe.bitcoinuniverse.io/op-drop">op-drop route</a>.</td></tr>
-          <tr><td>Core explorer</td><td><span class="badge ok">wired</span></td><td>Confirmed deployments, supply, holders, and event history.</td></tr>
-          <tr><td>Core portfolio</td><td><span class="badge ok">wired</span></td><td>Available, reserved, and total balances per address.</td></tr>
-          <tr><td>Core marketplace</td><td><span class="badge part">feature-gated</span></td><td>Trading is behind the <code>opDropTrading</code> gate and runs in external-execution mode. Selling is explicitly unsupported.</td></tr>
+          <tr><td>Core explorer</td><td><span class="badge part">feature-gated</span></td><td>Confirmed deployments, supply, holders, and event history, behind the <code>opDropIndex</code> gate, which is off unless a deployment turns it on.</td></tr>
+          <tr><td>Core portfolio</td><td><span class="badge ok">wired</span></td><td>Available, reserved, and total balances per address. Not gated.</td></tr>
+          <tr><td>Core marketplace</td><td><span class="badge part">feature-gated</span></td><td>Trading is behind the <code>opDropTrading</code> gate, also off by default, and runs in external-execution mode. Selling is explicitly unsupported.</td></tr>
         </tbody>
       </table>
     </div>
