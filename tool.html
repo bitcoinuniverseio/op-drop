@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP script builder and decoder</title>
+<meta name="description" content="Decode an OP_DROP leaf script in your browser: see the pushed payload, the stack evolution step by step, and the reveal size. Or build a leaf from a payload and get the exact script hex with fee estimates.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/tool.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP script builder and decoder">
+<meta property="og:description" content="Client-side. Paste a leaf script and watch the payload get pushed and dropped.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/tool.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html" aria-current="page">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#decode">Decoder</a></li>
+        <li><a href="#build">Builder</a></li>
+        <li><a href="#howto">How to read the result</a></li>
+        <li><a href="#limits">What it does not check</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Interactive, spec 1.0.0</p>
+    <h1>Builder and decoder</h1>
+    <p class="lede">Two tools against the same grammar. The decoder takes a leaf script hex and tells you what the payload is and exactly how the stack behaves. The builder takes a payload and emits the leaf script that carries it.</p>
+
+    <div class="note">
+      <p><strong>Everything runs in your browser.</strong> Nothing you paste or type leaves this page. There is no network request, no analytics, no storage of your input, and no server involved. The page works offline once loaded. Spec version 1.0.0; leaf bytes are identical on mainnet, testnet, signet, and regtest.</p>
+    </div>
+
+    <noscript>
+      <div class="note bad">
+        <p><strong>These tools need JavaScript.</strong> Everything else on this site works without it. The <a href="test-vectors.html">test vectors</a> page contains the same worked examples with their expected results already computed, and the <a href="specification.html#script">specification</a> gives the grammar you can implement yourself.</p>
+      </div>
+    </noscript>
+
+    <h2 id="decode">Decoder</h2>
+    <div class="tool jsonly">
+      <div class="field">
+        <label for="decode-input">Leaf script hex (witness item 1 of an OP_DROP reveal input)</label>
+        <textarea id="decode-input" spellcheck="false" autocomplete="off" placeholder="0e6269703131302d6f702d64726f7075…"></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" id="decode-run">Decode</button>
+        <button type="button" class="secondary" id="decode-sample" data-script="0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e175367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac">Load a sample leaf</button>
+        <button type="button" class="secondary" id="decode-clear">Clear</button>
+      </div>
+      <div class="verdict idle" id="decode-verdict" role="status" aria-live="polite">Paste a leaf script hex and select Decode.</div>
+      <h3>Stack evolution</h3>
+      <div class="stackview" id="decode-stack"></div>
+      <div id="decode-detail"></div>
+    </div>
+
+    <h2 id="build">Builder</h2>
+    <div class="tool jsonly">
+      <div class="row">
+        <div class="field">
+          <label for="build-op">Operation</label>
+          <select id="build-op">
+            <option value="mint">mint</option>
+            <option value="transfer">transfer</option>
+            <option value="deploy">deploy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="build-tick">Ticker (exactly four characters)</label>
+          <input type="text" id="build-tick" value="drop" maxlength="4" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="field" id="field-amt">
+          <label for="build-amt">Amount</label>
+          <input type="text" id="build-amt" value="1000" spellcheck="false" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="field" id="field-max" hidden>
+          <label for="build-max">Maximum supply</label>
+          <input type="text" id="build-max" value="21000000" spellcheck="false" autocomplete="off" inputmode="numeric">
+        </div>
+        <div class="field" id="field-lim" hidden>
+          <label for="build-lim">Limit per mint</label>
+          <input type="text" id="build-lim" value="1000" spellcheck="false" autocomplete="off" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label for="build-key">x-only public key (64 hex characters)</label>
+        <input type="text" id="build-key" value="8836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3b" spellcheck="false" autocomplete="off">
+      </div>
+      <div class="actions">
+        <button type="button" id="build-run">Build leaf script</button>
+      </div>
+      <div class="verdict idle" id="build-verdict" role="status" aria-live="polite">Choose an operation and select Build.</div>
+      <h3>Stack evolution</h3>
+      <div class="stackview" id="build-stack"></div>
+      <div id="build-detail"></div>
+    </div>
+
+    <h2 id="howto">How to read the result</h2>
+    <p>The stack view is the point of the whole protocol, so it is worth reading carefully.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>What each row of the stack view means</caption>
+        <thead><tr><th>Row</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Step 0</td><td>The witness has already placed the Schnorr signature on the stack before the leaf script starts running. Everything the leaf does happens on top of it.</td></tr>
+          <tr><td>A push row</td><td>One data element is added to the stack. The stack grows by exactly one item.</td></tr>
+          <tr><td>An <code>OP_DROP</code> row</td><td>The top item is removed. The stack returns to what it held before the push. This row is coloured differently because it is the mechanism the protocol is named after.</td></tr>
+          <tr><td>The <code>OP_CHECKSIG</code> row</td><td>The public key and the signature are both consumed and a single truth value is left. That value alone decides whether the spend is valid.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>If the payload were meaningful to consensus, it would have to survive to the end. It does not. That is why an OP_DROP transaction is not more likely to be rejected by a node than any other Taproot script-path spend: at the point the node makes its decision, the payload is already gone.</p>
+
+    <h2 id="limits">What these tools do not check</h2>
+    <p>The decoder validates the leaf script and the payload. Four things are outside its reach, and all four matter before you can call an event valid.</p>
+    <ol>
+      <li><strong>The Taproot commitment.</strong> A leaf counts only when a 33-byte control block proves the spent P2TR output committed to it (<a href="specification.html#commitment">OD-5.1 to OD-5.4</a>). That needs the control block and the previous output script, neither of which is in the leaf.</li>
+      <li><strong>Ledger state.</strong> Whether a mint is within the remaining supply, whether a ticker is already deployed, whether a sender has the balance: all of that depends on the whole chain history, not on one script.</li>
+      <li><strong>The anchor and settlement.</strong> Whether output 0 of the reveal yields an address, and where a transfer eventually settles, is transaction-level information.</li>
+      <li><strong>The media attachment.</strong> If a leaf carries an appended <code>drops-media</code> image, the decoder reports its presence and decodes the token fields, but does not verify the image chunks, digest, or size.</li>
+    </ol>
+    <p>For the full picture, read the <a href="specification.html">specification</a> and check your implementation against the <a href="test-vectors.html">test vectors</a>.</p>
+
+    <h3>Fee estimates</h3>
+    <p>The fee table models the reveal transaction only: one Taproot script-path input, one Taproot output, one Schnorr signature, the leaf script, and a 33-byte control block. Weight is computed as <code>base bytes &times; 4 + 2 + witness bytes</code>, and virtual size is the weight rounded up to the next whole vbyte. A real order also pays for the commit transaction and for any extra outputs your wallet adds, so treat the number as a floor.</p>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>tool.html, assets/builder.js</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/tool.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+<script src="assets/builder.js" defer></script>
+</body>
+</html>

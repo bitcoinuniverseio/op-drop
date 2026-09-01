@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP specification 1.0.0</title>
+<meta name="description" content="The normative OP_DROP specification: leaf script grammar, Taproot commitment proof, payload encoding, identifiers, operations, ordering, state transitions, and every invalid condition.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/specification.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP specification 1.0.0">
+<meta property="og:description" content="Numbered normative rules for the OP_DROP carrier and its token ledger.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/specification.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html" aria-current="page">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">Sections</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#scope">1. Scope</a></li>
+        <li><a href="#notation">2. Notation</a></li>
+        <li><a href="#anatomy">3. Transaction anatomy</a></li>
+        <li><a href="#script">4. Leaf script</a></li>
+        <li><a href="#commitment">5. Commitment proof</a></li>
+        <li><a href="#payload">6. Payload encoding</a></li>
+        <li><a href="#identifiers">7. Identifiers</a></li>
+        <li><a href="#operations">8. Operations</a></li>
+        <li><a href="#ordering">9. Ordering</a></li>
+        <li><a href="#ledger">10. State transitions</a></li>
+        <li><a href="#invalid">11. Invalid conditions</a></li>
+        <li><a href="#media">12. Media attachment</a></li>
+        <li><a href="#profile">13. BIP-110 profile</a></li>
+        <li><a href="#conformance">14. Conformance</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Normative specification, version 1.0.0</p>
+    <h1>OP_DROP specification</h1>
+    <p class="lede">This document defines the OP_DROP carrier and the token ledger carried on it. Rules are numbered <code>OD-x.y</code> and are normative. Everything else on this page is explanation.</p>
+
+    <div class="note">
+      <p><strong>Status.</strong> Experimental. Bitcoin, on mainnet, testnet, signet, and regtest. The rules below match the reference implementation operated by Bitcoin Universe as of 2026-09-01. Where the carrier layer and the ledger layer disagree, both outcomes are stated, because a leaf can parse correctly and still change no balance.</p>
+    </div>
+
+    <h2 id="scope">1. Scope and layering</h2>
+    <p>OP_DROP is specified in two layers. Implementations may adopt the carrier without the ledger, but the ledger is meaningless without the carrier.</p>
+    <ul class="rules">
+      <li><span class="rid">OD-1.1</span><div class="rbody"><p>The <strong>carrier layer</strong> defines a Taproot leaf script grammar that commits a payload to the blockchain. Its selector is the fixed ASCII string <code>bip110-op-drop</code>. This string appears only inside the script; it is never a user-facing protocol name and is never serialized into the payload.</p></div></li>
+      <li><span class="rid">OD-1.2</span><div class="rbody"><p>The <strong>ledger layer</strong> defines what the carried payload means. Its public identifier is the JSON field <code>"p":"op-drop"</code>. This is the name that applications, routes, and users see.</p></div></li>
+      <li><span class="rid">OD-1.3</span><div class="rbody"><p>A leaf that satisfies the carrier layer but fails a ledger rule is recorded as an observed event with status <code>invalid</code> and a reason. It changes no supply, no balance, and no holder count.</p></div></li>
+      <li><span class="rid">OD-1.4</span><div class="rbody"><p>OP_DROP does not require, propose, or depend on any change to Bitcoin consensus. It uses <code>OP_DROP</code> (<code>0x75</code>) and <code>OP_CHECKSIG</code> (<code>0xac</code>) inside a BIP-341 script-path spend with a BIP-342 tapscript leaf.</p></div></li>
+      <li><span class="rid">OD-1.5</span><div class="rbody"><p>Each network is evaluated independently. A ticker deployed on one network establishes nothing on another.</p></div></li>
+    </ul>
+
+    <h2 id="notation">2. Notation and terminology</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Terms used normatively</caption>
+        <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Leaf script</td><td>The tapscript revealed in a script-path spend, tapleaf version <code>0xc0</code>.</td></tr>
+          <tr><td>Commit transaction</td><td>Any transaction creating the P2TR output that commits to the leaf.</td></tr>
+          <tr><td>Reveal transaction</td><td>The transaction that spends that output along the script path, exposing the leaf in its witness.</td></tr>
+          <tr><td>Anchor</td><td>Output index 0 of the reveal transaction, written <code>{txid}:0</code>. Its address owns the event.</td></tr>
+          <tr><td>Event</td><td>One accepted or rejected protocol action derived from one reveal input, or one transfer settlement.</td></tr>
+          <tr><td>Payload</td><td>The compact UTF-8 JSON object carried in script element 7.</td></tr>
+          <tr><td>Available</td><td>Confirmed units an address may spend into a new transfer.</td></tr>
+          <tr><td>Reserved</td><td>Confirmed units held by an unsettled transfer. The API field name is <code>transferable</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Byte values are hexadecimal. Sizes are in bytes unless a unit is given. "Must" and "must not" are requirements; a violation makes the described thing invalid.</p>
+
+    <h2 id="anatomy">3. Transaction anatomy</h2>
+    <p>OP_DROP uses the commit and reveal pattern that Taproot script paths require. The commitment is created first as an ordinary payment, and the payload becomes visible only when that output is spent.</p>
+
+    <figure class="figscroll figwide">
+      <svg viewBox="0 0 720 360" role="img" aria-labelledby="fig-anat-t fig-anat-d">
+        <title id="fig-anat-t">Commit and reveal transaction anatomy for OP_DROP</title>
+        <desc id="fig-anat-d">On the left, a commit transaction pays to a Taproot output whose output key commits to the OP_DROP leaf. In the middle, a reveal transaction spends that output. Its witness holds exactly three items: a Schnorr signature, the leaf script, and a 33-byte control block. Its output 0 is the anchor, and the address of that output owns the event. On the right, for a transfer only, a later transaction spends the anchor, and the address of that later transaction's output 0 becomes the settlement destination.</desc>
+
+        <!-- commit -->
+        <text class="d-cap" x="12" y="18">Commit transaction</text>
+        <rect x="12" y="28" width="180" height="106" class="d-box"></rect>
+        <text class="d-tm" x="24" y="50">inputs: any</text>
+        <line x1="24" y1="60" x2="180" y2="60" class="d-lead"></line>
+        <text class="d-tm" x="24" y="80">vout 0: P2TR</text>
+        <text class="d-tmute" x="24" y="96">output key commits</text>
+        <text class="d-tmute" x="24" y="110">to the leaf</text>
+        <text class="d-tmute" x="24" y="126">vout 1: change</text>
+
+        <path d="M192 82 H236" class="d-lead-a"></path>
+        <path d="M236 78 v8 l8 -4 z" class="d-arrow-a"></path>
+        <text class="d-tmute" x="196" y="74">spent by</text>
+
+        <!-- reveal -->
+        <text class="d-cap" x="252" y="18">Reveal transaction</text>
+        <rect x="252" y="28" width="212" height="200" class="d-box-a"></rect>
+        <text class="d-ta" x="264" y="50">vin i: script path</text>
+        <text class="d-tmute" x="264" y="68">witness item 0: signature</text>
+        <text class="d-tmute" x="264" y="84">witness item 1: leaf script</text>
+        <text class="d-tmute" x="264" y="100">witness item 2: control block</text>
+        <text class="d-tmute" x="264" y="116">exactly three items</text>
+        <line x1="264" y1="128" x2="452" y2="128" class="d-lead"></line>
+        <text class="d-ta" x="264" y="150">vout 0: the anchor</text>
+        <text class="d-tmute" x="264" y="166">its address owns the event</text>
+        <text class="d-tmute" x="264" y="188">vout 1+: ignored by</text>
+        <text class="d-tmute" x="264" y="202">the protocol</text>
+        <circle cx="440" cy="150" r="11" class="d-num"></circle>
+        <circle cx="440" cy="150" r="11" class="d-numring"></circle>
+        <text class="d-numtext" x="440" y="154" text-anchor="middle">A</text>
+
+        <path d="M464 150 H508" class="d-lead-a" stroke-dasharray="4 3"></path>
+        <path d="M508 146 v8 l8 -4 z" class="d-arrow-a"></path>
+        <text class="d-tmute" x="466" y="142">transfer only</text>
+
+        <!-- settlement -->
+        <text class="d-cap" x="524" y="18">Settlement transaction</text>
+        <rect x="524" y="28" width="184" height="140" class="d-box"></rect>
+        <text class="d-tm" x="536" y="50">vin: spends anchor A</text>
+        <line x1="536" y1="60" x2="696" y2="60" class="d-lead"></line>
+        <text class="d-ta" x="536" y="82">vout 0: destination</text>
+        <text class="d-tmute" x="536" y="98">reserved units credited</text>
+        <text class="d-tmute" x="536" y="112">to this address</text>
+        <text class="d-tmute" x="536" y="136">no address here means</text>
+        <text class="d-tmute" x="536" y="150">the transfer returns</text>
+
+        <line x1="12" y1="258" x2="708" y2="258" class="d-lead"></line>
+        <text class="d-tmute" x="12" y="282">The payload is invisible until the reveal confirms. Watching only the commit transaction shows an ordinary Taproot payment.</text>
+        <text class="d-tmute" x="12" y="302">Several inputs of one reveal transaction may each carry a leaf. Each is a separate event, ordered by input index.</text>
+        <text class="d-tmute" x="12" y="322">A settlement transaction needs no OP_DROP leaf of its own. Spending the anchor is the entire signal.</text>
+      </svg>
+      <figcaption>Commit, reveal, and (for a transfer only) settlement. Output index 0 is load bearing in both the reveal and the settlement.</figcaption>
+    </figure>
+
+    <ul class="rules">
+      <li><span class="rid">OD-3.1</span><div class="rbody"><p>A reveal input's witness stack must contain exactly three items, in this order: a Schnorr signature of 64 or 65 bytes, the leaf script, and a control block. A witness with two items, four items, or a Taproot annex is not an OP_DROP reveal.</p></div></li>
+      <li><span class="rid">OD-3.2</span><div class="rbody"><p>The control block must be exactly 33 bytes, and its first byte must not be <code>0x50</code>. A 33-byte control block means the leaf is the only leaf in the tree, so the script tree has depth zero.</p></div></li>
+      <li><span class="rid">OD-3.3</span><div class="rbody"><p>The spent previous output must be a P2TR scriptPubKey: 34 bytes beginning <code>0x51 0x20</code>.</p></div></li>
+      <li><span class="rid">OD-3.4</span><div class="rbody"><p>Output index 0 of the reveal transaction is the <strong>anchor</strong>. The address derived from its scriptPubKey is the owner of every event produced by that transaction. Outputs at index 1 and above have no protocol meaning.</p></div></li>
+      <li><span class="rid">OD-3.5</span><div class="rbody"><p>A transaction may contain more than one reveal input. Each input that satisfies OD-3.1 through OD-3.3 produces its own event, and all of them share the same anchor and owner address.</p></div></li>
+      <li><span class="rid">OD-3.6</span><div class="rbody"><p>A transfer settlement is signalled by spending the anchor outpoint <code>{revealTxid}:0</code>. The settlement transaction requires no OP_DROP leaf. The address of <em>its</em> output 0 is the destination. No later output, no change output, and no witness-derived address may become the destination.</p></div></li>
+    </ul>
+
+    <h2 id="script">4. Leaf script grammar</h2>
+    <p>The leaf script is a fixed sequence of ten elements. Nothing is optional, nothing may be reordered, and no alternate encoding is accepted.</p>
+
+<pre><code>PUSH "bip110-op-drop"      &lt;- 14 bytes, ASCII
+OP_DROP
+PUSH "application/json"    &lt;- 16 bytes, ASCII
+OP_DROP
+PUSH &lt;sha256(payload)&gt;     &lt;- exactly 32 bytes
+OP_DROP
+PUSH &lt;payload&gt;             &lt;- 1 to 256 bytes, UTF-8 JSON
+OP_DROP
+PUSH &lt;x-only public key&gt;   &lt;- exactly 32 bytes
+OP_CHECKSIG</code></pre>
+
+    <ul class="rules">
+      <li><span class="rid">OD-4.1</span><div class="rbody"><p>Element 1 must be a data push of the exact ASCII bytes <code>bip110-op-drop</code> (14 bytes, hex <code>6269703131302d6f702d64726f70</code>).</p></div></li>
+      <li><span class="rid">OD-4.2</span><div class="rbody"><p>Element 3 must be a data push of the exact ASCII bytes <code>application/json</code> (16 bytes).</p></div></li>
+      <li><span class="rid">OD-4.3</span><div class="rbody"><p>Element 5 must be a data push of exactly 32 bytes: the SHA-256 digest of the payload bytes in element 7. A mismatch invalidates the leaf.</p></div></li>
+      <li><span class="rid">OD-4.4</span><div class="rbody"><p>Element 7 must be a data push of the payload. It must be valid UTF-8 and must satisfy section 6.</p></div></li>
+      <li><span class="rid">OD-4.5</span><div class="rbody"><p>Element 9 must be a data push of exactly 32 bytes: an x-only public key.</p></div></li>
+      <li><span class="rid">OD-4.6</span><div class="rbody"><p>Elements 2, 4, 6, and 8 must each be <code>OP_DROP</code> (<code>0x75</code>). Element 10 must be <code>OP_CHECKSIG</code> (<code>0xac</code>).</p></div></li>
+      <li><span class="rid">OD-4.7</span><div class="rbody"><p>No data push may exceed 256 bytes.</p></div></li>
+      <li><span class="rid">OD-4.8</span><div class="rbody"><p>Every push must use the shortest encoding for its length: a direct push opcode for 1 to 75 bytes, <code>OP_PUSHDATA1</code> for 76 to 255 bytes, <code>OP_PUSHDATA2</code> for 256 bytes. A decoder must verify this by recompiling the leaf from its decoded fields and comparing the result byte for byte with the script it was given. Any difference invalidates the leaf.</p></div></li>
+      <li><span class="rid">OD-4.9</span><div class="rbody"><p>The script must contain no conditional opcode, no <code>OP_SUCCESS</code> opcode, and no element beyond element 10, except the optional media attachment defined in section 12.</p></div></li>
+    </ul>
+    <div class="note">
+      <p>OD-4.8 is what makes look-alike scripts worthless. Re-encoding the same 14-byte marker with <code>OP_PUSHDATA1</code> instead of a direct push produces a different script that fails the rebuild check, even though every field decodes identically.</p>
+    </div>
+
+    <h2 id="commitment">5. Taproot commitment proof</h2>
+    <p>A witness item that merely looks like an OP_DROP leaf proves nothing. The leaf counts only when the control block proves the spent output committed to it.</p>
+    <ul class="rules">
+      <li><span class="rid">OD-5.1</span><div class="rbody"><p>The leaf version is <code>0xc0</code>. It is read as <code>controlBlock[0] &amp; 0xfe</code> and must equal <code>0xc0</code>.</p></div></li>
+      <li><span class="rid">OD-5.2</span><div class="rbody"><p>Compute the BIP-341 tapleaf hash of the script at version <code>0xc0</code>, derive the Merkle root from the control block path (empty, because the control block is 33 bytes), and tweak the internal key from <code>controlBlock[1..33]</code> with that root.</p></div></li>
+      <li><span class="rid">OD-5.3</span><div class="rbody"><p>The parity of the resulting output key must equal <code>controlBlock[0] &amp; 1</code>.</p></div></li>
+      <li><span class="rid">OD-5.4</span><div class="rbody"><p>The x coordinate of the resulting output key must equal bytes 2 to 33 of the spent previous output's scriptPubKey. If it does not, the leaf did not belong to that output and the event is <code>invalid_taproot_commitment</code>.</p></div></li>
+    </ul>
+
+    <h2 id="payload">6. Payload encoding</h2>
+    <p>The payload is a compact JSON object. Its exact bytes are the event: any change to spacing, key order, or value type produces a different, and almost always invalid, event.</p>
+    <ul class="rules">
+      <li><span class="rid">OD-6.1</span><div class="rbody"><p>The payload must be valid UTF-8 and must parse as a JSON object (not an array, not a scalar, not null).</p></div></li>
+      <li><span class="rid">OD-6.2</span><div class="rbody"><p>Every value must be a JSON string. Numbers, booleans, nulls, arrays, and nested objects are rejected.</p></div></li>
+      <li><span class="rid">OD-6.3</span><div class="rbody"><p>The field <code>p</code> must be exactly <code>op-drop</code>.</p></div></li>
+      <li><span class="rid">OD-6.4</span><div class="rbody"><p>The field <code>op</code> must be exactly <code>deploy</code>, <code>mint</code>, or <code>transfer</code>.</p></div></li>
+      <li><span class="rid">OD-6.5</span><div class="rbody"><p>The field <code>tick</code> must match <code>^[a-z0-9]{4}$</code>: exactly four lowercase ASCII letters or digits.</p></div></li>
+      <li><span class="rid">OD-6.6</span><div class="rbody"><p>Keys must be exactly the set for the operation, in exactly this order. Extra keys, missing keys, duplicate keys, and reordered keys are all rejected.</p>
+        <div class="tablewrap"><table><thead><tr><th>Operation</th><th>Required key order</th></tr></thead><tbody>
+          <tr><td><code>deploy</code></td><td><code>p</code>, <code>op</code>, <code>tick</code>, <code>max</code>, <code>lim</code></td></tr>
+          <tr><td><code>deploy</code> with self mint</td><td><code>p</code>, <code>op</code>, <code>tick</code>, <code>max</code>, <code>lim</code>, <code>self_mint</code></td></tr>
+          <tr><td><code>mint</code></td><td><code>p</code>, <code>op</code>, <code>tick</code>, <code>amt</code></td></tr>
+          <tr><td><code>transfer</code></td><td><code>p</code>, <code>op</code>, <code>tick</code>, <code>amt</code></td></tr>
+        </tbody></table></div>
+      </div></li>
+      <li><span class="rid">OD-6.7</span><div class="rbody"><p>A field named <code>v</code> is rejected outright. OP_DROP payloads carry no version field; the grammar itself is the version.</p></div></li>
+      <li><span class="rid">OD-6.8</span><div class="rbody"><p>Numeric fields (<code>max</code>, <code>lim</code>, <code>amt</code>) must match <code>^[1-9][0-9]*$</code>: a positive base-10 integer string with no sign, decimal point, exponent, whitespace, or leading zero. Zero is not a valid value.</p></div></li>
+      <li><span class="rid">OD-6.9</span><div class="rbody"><p><code>max</code> must not exceed 18446744073709551615 (2<sup>64</sup> minus 1). <code>lim</code> and <code>amt</code> must not exceed 340282366920938463463374607431768211455 (2<sup>128</sup> minus 1).</p></div></li>
+      <li><span class="rid">OD-6.10</span><div class="rbody"><p>On <code>deploy</code>, <code>lim</code> must not exceed <code>max</code>.</p></div></li>
+      <li><span class="rid">OD-6.11</span><div class="rbody"><p>When <code>self_mint</code> is present it must be the exact string <code>true</code>. The carrier accepts it; the ledger profile in OD-8.7 rejects it.</p></div></li>
+      <li><span class="rid">OD-6.12</span><div class="rbody"><p>The payload bytes must equal the compact serialization of the parsed object with no whitespace outside string values. A decoder verifies this by re-serializing the parsed object and comparing it with the original bytes.</p></div></li>
+      <li><span class="rid">OD-6.13</span><div class="rbody"><p>There are no decimals. All quantities are whole units and are transported and displayed as decimal strings so large values stay exact.</p></div></li>
+    </ul>
+    <p>The three shapes, exactly as they appear on chain:</p>
+<pre><code>{"p":"op-drop","op":"deploy","tick":"drop","max":"21000000","lim":"1000"}
+{"p":"op-drop","op":"mint","tick":"drop","amt":"1000"}
+{"p":"op-drop","op":"transfer","tick":"drop","amt":"250"}</code></pre>
+    <p>The largest possible deploy payload is 101 bytes and the largest possible transfer payload is 93 bytes, so a token payload never approaches the 256-byte push ceiling. That ceiling binds only on the media attachment in section 12.</p>
+
+    <h2 id="identifiers">7. Identifiers</h2>
+    <ul class="rules">
+      <li><span class="rid">OD-7.1</span><div class="rbody"><p>A reveal event id is <code>{txid}:i{vinIndex}:w1</code>, where <code>vinIndex</code> is the zero-based input index carrying the leaf and <code>w1</code> is the witness position of the script. Example: <code>a1b2…:i0:w1</code>.</p></div></li>
+      <li><span class="rid">OD-7.2</span><div class="rbody"><p>A settlement event id is <code>{settlementTxid}:s{vinIndex}:{transferEventId}</code>, where <code>vinIndex</code> is the input of the settlement transaction that spent the anchor.</p></div></li>
+      <li><span class="rid">OD-7.3</span><div class="rbody"><p>An anchor is written <code>{txid}:{vout}</code> and <code>vout</code> is always 0 for a reveal.</p></div></li>
+      <li><span class="rid">OD-7.4</span><div class="rbody"><p>A deployment is identified by the pair (network, <code>tick</code>). A display name such as <code>$DROP</code> is presentation only; the wire ticker is the identifier.</p></div></li>
+      <li><span class="rid">OD-7.5</span><div class="rbody"><p>Event ids are unique per network. An indexer must ignore a second observation of an id it already holds.</p></div></li>
+    </ul>
+
+    <h2 id="operations">8. Operations</h2>
+    <ul class="rules">
+      <li><span class="rid">OD-8.1</span><div class="rbody"><p><strong>Deploy</strong> establishes the rules for one ticker: a maximum supply <code>max</code> and a per-mint limit <code>lim</code>. The first valid deploy for a ticker in ordering order wins.</p></div></li>
+      <li><span class="rid">OD-8.2</span><div class="rbody"><p>A later deploy for a ticker that already has a valid deployment is <code>duplicate_deploy</code>. It cannot replace, extend, or amend the first deployment.</p></div></li>
+      <li><span class="rid">OD-8.3</span><div class="rbody"><p>An invalid deploy reserves nothing. The ticker remains available to a later valid deploy.</p></div></li>
+      <li><span class="rid">OD-8.4</span><div class="rbody"><p><strong>Mint</strong> requests <code>amt</code> units of a deployed ticker. With <code>remaining = max - minted</code> measured before the event:</p>
+<pre><code>if amt &gt; lim          -&gt; invalid, mint_limit_exceeded
+if remaining &lt;= 0     -&gt; invalid, supply_exhausted
+otherwise             -&gt; credited = min(amt, remaining)</code></pre>
+        <p>The credited amount becomes available balance at the anchor address. A mint that requests more than the remaining supply, but no more than <code>lim</code>, is valid and receives the remainder. Mints after the supply reaches zero are invalid.</p>
+      </div></li>
+      <li><span class="rid">OD-8.5</span><div class="rbody"><p>A mint for a ticker with no valid deployment is <code>unknown_tick</code>.</p></div></li>
+      <li><span class="rid">OD-8.6</span><div class="rbody"><p><strong>Transfer</strong> is a two-stage operation described in section 10.</p></div></li>
+      <li><span class="rid">OD-8.7</span><div class="rbody"><p>The ledger profile is narrower than the carrier. A payload whose <code>tick</code> is not exactly four characters, whose <code>max</code> exceeds 2<sup>64</sup> minus 1, whose <code>lim</code> or <code>amt</code> exceeds 2<sup>128</sup> minus 1, or whose <code>lim</code> exceeds <code>max</code>, is <code>unsupported_profile</code>. A deploy carrying <code>self_mint</code> is <code>unsupported_self_mint</code>. There is no self-mint mode in this ledger.</p></div></li>
+    </ul>
+
+    <h2 id="ordering">9. Deterministic ordering</h2>
+    <p>Two implementations must agree on which deploy wins, which mint takes the last of the supply, and which transfer settles first. Ordering is therefore total and fully determined by chain data.</p>
+    <ul class="rules">
+      <li><span class="rid">OD-9.1</span><div class="rbody"><p>Events are applied in ascending order of, in priority order: block height, then transaction index within the block, then operation index within the transaction.</p></div></li>
+      <li><span class="rid">OD-9.2</span><div class="rbody"><p>The operation index is <code>phase &times; 1000000 + vinIndex &times; 1000 + witnessIndex</code>. Phase 0 is a transfer settlement, phase 1 is a reveal leaf. Settlements therefore apply before reveals within the same transaction, so units arriving by settlement are usable by a later operation in that same transaction.</p></div></li>
+      <li><span class="rid">OD-9.3</span><div class="rbody"><p>Within a phase, ordering follows the input index, then the witness position.</p></div></li>
+      <li><span class="rid">OD-9.4</span><div class="rbody"><p>Ordering never depends on wall-clock time, on the order in which an indexer discovered transactions, or on mempool arrival.</p></div></li>
+    </ul>
+
+    <h2 id="ledger">10. State transitions</h2>
+    <p>Each address holds a per-ticker balance with two parts. <code>total</code> is always <code>available + reserved</code> and is never stored independently.</p>
+
+    <figure class="figscroll">
+      <svg viewBox="0 0 620 260" role="img" aria-labelledby="fig-state-t fig-state-d">
+        <title id="fig-state-t">Transfer state machine</title>
+        <desc id="fig-state-d">Units start as available at the sender. A confirmed valid transfer moves them to reserved and the event status becomes transfer pending. When the anchor is spent, one of two things happens: if the spending transaction's output 0 yields an address, the units leave the sender and become available at that destination and the event status becomes settled; if it does not, the units return to the sender's available balance and the event status becomes invalid with reason invalid transfer destination.</desc>
+
+        <rect x="16" y="40" width="140" height="52" class="d-box"></rect>
+        <text class="d-tm" x="86" y="64" text-anchor="middle">available</text>
+        <text class="d-tmute" x="86" y="80" text-anchor="middle">sender</text>
+
+        <path d="M156 66 H226" class="d-lead-a"></path>
+        <path d="M226 62 v8 l8 -4 z" class="d-arrow-a"></path>
+        <text class="d-ta" x="160" y="56">transfer</text>
+        <text class="d-tmute" x="160" y="86">confirmed and valid</text>
+
+        <rect x="234" y="40" width="140" height="52" class="d-box-a"></rect>
+        <text class="d-ta" x="304" y="64" text-anchor="middle">reserved</text>
+        <text class="d-tmute" x="304" y="80" text-anchor="middle">transfer_pending</text>
+
+        <path d="M374 60 H452" class="d-lead-a"></path>
+        <path d="M452 56 v8 l8 -4 z" class="d-arrow-a"></path>
+        <text class="d-ta" x="380" y="50">anchor spent,</text>
+        <text class="d-ta" x="380" y="36">output 0 has an address</text>
+
+        <rect x="460" y="34" width="146" height="52" class="d-box"></rect>
+        <text class="d-tm" x="533" y="58" text-anchor="middle">available</text>
+        <text class="d-tmute" x="533" y="74" text-anchor="middle">destination, settled</text>
+
+        <path d="M304 92 V160 H90 V96" class="d-lead"></path>
+        <path d="M86 96 h8 l-4 -8 z" class="d-arrow"></path>
+        <text class="d-tmute" x="120" y="152">anchor spent, output 0 yields no address: units return, event invalid</text>
+
+        <line x1="16" y1="196" x2="606" y2="196" class="d-lead"></line>
+        <text class="d-tmute" x="16" y="218">A return is not a burn. Nothing is ever destroyed by an invalid settlement.</text>
+        <text class="d-tmute" x="16" y="238">Reserved units are already deducted from available, so total does not change when a transfer is confirmed.</text>
+      </svg>
+      <figcaption>The transfer state machine. The only two exits from <code>reserved</code> are settlement to a destination or return to the sender.</figcaption>
+    </figure>
+
+    <ul class="rules">
+      <li><span class="rid">OD-10.1</span><div class="rbody"><p>A valid mint adds its credited amount to <code>available</code> at the anchor address and adds the same amount to the deployment's minted supply.</p></div></li>
+      <li><span class="rid">OD-10.2</span><div class="rbody"><p>A transfer is valid only when the anchor address holds at least <code>amt</code> in <code>available</code> at the moment the event is applied. Otherwise it is <code>insufficient_available_balance</code>.</p></div></li>
+      <li><span class="rid">OD-10.3</span><div class="rbody"><p>On a valid transfer, <code>amt</code> moves from <code>available</code> to <code>reserved</code> at the sender, the event status becomes <code>transfer_pending</code>, and a transfer record is opened against the anchor. No recipient has received anything at this point.</p></div></li>
+      <li><span class="rid">OD-10.4</span><div class="rbody"><p>When the anchor outpoint is first spent in a confirmed transaction, the transfer settles. If that transaction's output 0 yields an address, the amount leaves the sender's <code>reserved</code> and is added to the destination's <code>available</code>. The settlement event status is <code>settled</code>.</p></div></li>
+      <li><span class="rid">OD-10.5</span><div class="rbody"><p>If output 0 of the settling transaction yields no address (for example an <code>OP_RETURN</code> or a script the network's address encoding cannot represent), the amount returns from <code>reserved</code> to <code>available</code> at the sender. The settlement event status is <code>invalid</code> with reason <code>invalid_transfer_destination</code>. Nothing is burned.</p></div></li>
+      <li><span class="rid">OD-10.6</span><div class="rbody"><p>Only the first confirmed spend of an anchor settles it. Later observations of the same anchor produce nothing.</p></div></li>
+      <li><span class="rid">OD-10.7</span><div class="rbody"><p>An address is a holder of a ticker when its <code>available</code> or <code>reserved</code> balance for that ticker is non-zero. An address with zero in both is not a holder.</p></div></li>
+      <li><span class="rid">OD-10.8</span><div class="rbody"><p>Invalid events never change any balance, any minted supply, or any holder count. They are recorded so the ledger is auditable.</p></div></li>
+    </ul>
+
+    <h3>Event statuses</h3>
+    <div class="tablewrap">
+      <table>
+        <caption>The four event statuses</caption>
+        <thead><tr><th>Status</th><th>Applies to</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>valid</code></td><td>deploy, mint</td><td>Every applicable rule passed and state changed.</td></tr>
+          <tr><td><code>transfer_pending</code></td><td>transfer</td><td>Units are reserved and the anchor is waiting to be spent.</td></tr>
+          <tr><td><code>settled</code></td><td>transfer_settle</td><td>Reserved units were credited to a destination.</td></tr>
+          <tr><td><code>invalid</code></td><td>any</td><td>A required rule failed. A reason accompanies it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="invalid">11. Invalid conditions</h2>
+    <p>Every rejection carries exactly one reason code. These are the complete set.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Reason codes and the condition that produces each</caption>
+        <thead><tr><th>Reason</th><th>Layer</th><th>Exact condition</th></tr></thead>
+        <tbody>
+          <tr><td><code>invalid_taproot_commitment</code></td><td>Carrier</td><td>The control block does not prove the leaf belongs to the spent P2TR output: wrong leaf version, parity mismatch, or an output key that does not match the previous output.</td></tr>
+          <tr><td><code>invalid_anchor</code></td><td>Carrier</td><td>A transfer whose reveal transaction has no usable output 0, or whose output 0 yields no address.</td></tr>
+          <tr><td><code>ambiguous_transfer_anchor</code></td><td>Carrier</td><td>More than one otherwise-valid transfer leaf appears in the same transaction. They would all claim the same single anchor, so every one of them is rejected. Deploys and mints in the same transaction are unaffected.</td></tr>
+          <tr><td><code>missing_transfer_source_authorization</code></td><td>Carrier</td><td>At or above the configured activation height, a transfer whose transaction does not also spend another input whose previous output script equals the anchor output script. This proves the sender controls the address the units are debited from.</td></tr>
+          <tr><td><code>invalid_transfer_destination</code></td><td>Ledger</td><td>The anchor was spent, but output 0 of the settling transaction yields no address. Reserved units return to the sender.</td></tr>
+          <tr><td><code>unsupported_profile</code></td><td>Ledger</td><td>A payload that parses as a carrier payload but breaks the ledger profile: a ticker that is not exactly four characters, or a value outside the ranges in OD-6.9, or <code>lim</code> greater than <code>max</code>.</td></tr>
+          <tr><td><code>unsupported_self_mint</code></td><td>Ledger</td><td>A deploy carrying <code>self_mint</code>.</td></tr>
+          <tr><td><code>duplicate_deploy</code></td><td>Ledger</td><td>A deploy for a ticker that already has a valid deployment on this network.</td></tr>
+          <tr><td><code>unknown_tick</code></td><td>Ledger</td><td>A mint or transfer for a ticker with no valid deployment.</td></tr>
+          <tr><td><code>mint_limit_exceeded</code></td><td>Ledger</td><td><code>amt</code> greater than the deployment's <code>lim</code>.</td></tr>
+          <tr><td><code>supply_exhausted</code></td><td>Ledger</td><td>Remaining supply is zero or less when the mint is applied.</td></tr>
+          <tr><td><code>insufficient_available_balance</code></td><td>Ledger</td><td>The anchor address does not hold <code>amt</code> in available balance when the transfer is applied.</td></tr>
+          <tr><td><code>invalid_bip110_transaction</code></td><td>Construction</td><td>The transaction breaks the reduced-data construction rules while a node reports those rules as enforced. Every event in that transaction, including any settlement, is invalidated. This reason is unreachable while the reduced-data deployment is inactive, which is its state on Bitcoin mainnet today.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A script that fails section 4 or section 5 before any of the above is not recorded at all. It is not an OP_DROP event, it is an unrelated Taproot spend.</p>
+
+    <h2 id="media">12. Optional media attachment</h2>
+    <p>A deploy, and only a deploy, may append an image to the same leaf. The attachment uses the same push-then-drop pattern and is appended after <code>OP_CHECKSIG</code>.</p>
+<pre><code>PUSH "drops-media"           OP_DROP
+PUSH "op-drop-token-image"   OP_DROP
+PUSH &lt;mime type, ASCII&gt;      OP_DROP
+PUSH &lt;sha256(image), 32 B&gt;   OP_DROP
+PUSH &lt;uint32 big-endian size, 4 B&gt;  OP_DROP
+PUSH &lt;chunk&gt;                 OP_DROP     (repeated)</code></pre>
+    <ul class="rules">
+      <li><span class="rid">OD-12.1</span><div class="rbody"><p>An attachment may accompany only a <code>deploy</code> payload. Attaching one to a mint or a transfer invalidates the leaf.</p></div></li>
+      <li><span class="rid">OD-12.2</span><div class="rbody"><p>The MIME type must be one of <code>image/png</code>, <code>image/jpeg</code>, <code>image/webp</code>, <code>image/gif</code>, and the image bytes must begin with the file signature for that type.</p></div></li>
+      <li><span class="rid">OD-12.3</span><div class="rbody"><p>The image must be at least 17 bytes and at most 262144 bytes (256 KiB). The declared 32-byte digest and 4-byte size must both match the reassembled image.</p></div></li>
+      <li><span class="rid">OD-12.4</span><div class="rbody"><p>Each chunk must be at least 17 bytes and at most 256 bytes. An encoder must not leave a final chunk shorter than 17 bytes; it must shorten the preceding chunk instead.</p></div></li>
+      <li><span class="rid">OD-12.5</span><div class="rbody"><p>Every field and every chunk must be followed by <code>OP_DROP</code>, so the attachment adds nothing to the stack either.</p></div></li>
+      <li><span class="rid">OD-12.6</span><div class="rbody"><p>The attachment does not change the token payload, the digest in element 5, or any ledger outcome.</p></div></li>
+    </ul>
+    <div class="note warn">
+      <p>A 256 KiB image needs at least 1024 chunks, each with its own push header and <code>OP_DROP</code>. At 256 bytes per chunk the attachment carries roughly 1.2 percent overhead in script bytes, and it makes the reveal transaction large. Attach a small image or none at all.</p>
+    </div>
+
+    <h2 id="profile">13. BIP-110 construction profile</h2>
+    <p><a href="https://bips.dev/110/">BIP-110</a> is a published proposal for a temporary set of reduced-data consensus limits. It is marked complete as a document. It is not active on Bitcoin. OP_DROP is built to stay inside its limits so that the carrier would keep working if those limits ever applied. That is a design constraint, not a claim.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>The seven reduced-data limits, and how OP_DROP stays inside each</caption>
+        <thead><tr><th>#</th><th>Limit</th><th>OP_DROP construction</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1</td><td>An output script is at most 34 bytes, or 83 bytes for an <code>OP_RETURN</code> output.</td><td>Every OP_DROP output is a 34-byte P2TR script.</td></tr>
+          <tr><td class="num">2</td><td>Every witness argument and data push is at most 256 bytes.</td><td>OD-4.7 enforces exactly this bound.</td></tr>
+          <tr><td class="num">3</td><td>Undefined witness versions and undefined tapleaf versions cannot be spent.</td><td>Witness version 1 and tapleaf version <code>0xc0</code> only.</td></tr>
+          <tr><td class="num">4</td><td>No Taproot annex.</td><td>OD-3.1 requires exactly three witness items, which leaves no room for an annex.</td></tr>
+          <tr><td class="num">5</td><td>A control block is at most 257 bytes.</td><td>OD-3.2 requires exactly 33 bytes, the minimum possible.</td></tr>
+          <tr><td class="num">6</td><td>No <code>OP_SUCCESS</code> opcode.</td><td>The grammar admits only <code>OP_DROP</code>, <code>OP_CHECKSIG</code>, and data pushes.</td></tr>
+          <tr><td class="num">7</td><td>No executed <code>OP_IF</code> or <code>OP_NOTIF</code>.</td><td>The grammar contains no conditional opcode at all, which is the difference from a witness envelope.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="rules">
+      <li><span class="rid">OD-13.1</span><div class="rbody"><p>When an indexer's Bitcoin node reports the reduced-data deployment as active for a block, and a transaction in that block breaks any of the seven limits, every OP_DROP event in that transaction is <code>invalid_bip110_transaction</code>.</p></div></li>
+      <li><span class="rid">OD-13.2</span><div class="rbody"><p>When the deployment is inactive, which is the current state of Bitcoin mainnet, the seven limits are a construction policy only. They do not invalidate anything.</p></div></li>
+      <li><span class="rid">OD-13.3</span><div class="rbody"><p>An indexer must not project state for a block whose reduced-data status it cannot determine. It must stop rather than guess.</p></div></li>
+    </ul>
+    <div class="note warn">
+      <p>A "BIP-110 ready" label in a Bitcoin Universe interface means the application is enforcing this construction profile before it shows activity. It does not mean BIP-110 is active, that a transaction will relay or be mined, or that another wallet or indexer recognises OP_DROP.</p>
+    </div>
+
+    <h2 id="conformance">14. Conformance</h2>
+    <p>An implementation conforms when it produces the same accept or reject decision, the same reason code, and the same resulting balances as the rules above, for every case on the <a href="test-vectors.html">test vectors</a> page.</p>
+    <ul class="rules">
+      <li><span class="rid">OD-14.1</span><div class="rbody"><p>An <strong>encoder</strong> conforms when, for any payload it emits, recompiling the leaf from its decoded fields reproduces the same bytes (OD-4.8), and the digest in element 5 matches element 7.</p></div></li>
+      <li><span class="rid">OD-14.2</span><div class="rbody"><p>A <strong>decoder</strong> conforms when it rejects every invalid vector for the stated reason and accepts every valid vector with the stated fields.</p></div></li>
+      <li><span class="rid">OD-14.3</span><div class="rbody"><p>An <strong>indexer</strong> conforms when it additionally applies sections 9 and 10 in order and reaches the same balances, minted supply, and holder counts from the same chain.</p></div></li>
+      <li><span class="rid">OD-14.4</span><div class="rbody"><p>An implementation must not derive OP_DROP state from an Ordinals or BRC-20 index. The two are unrelated records.</p></div></li>
+    </ul>
+
+    <h3>Relationship to BRC-20</h3>
+    <p>The ledger deliberately borrows accounting ideas that BRC-20 popularised: four-character tickers, first valid deploy wins, a per-mint limit, a partial final mint that receives the remainder, and a two-stage transfer. BRC-20 originated outside Bitcoin Universe. OP_DROP is not BRC-20, produces no Ordinals inscription number, and has no automatic interoperability with either system. The carrier, the identifiers, and the transfer settlement mechanism are OP_DROP's own.</p>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>specification.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/specification.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

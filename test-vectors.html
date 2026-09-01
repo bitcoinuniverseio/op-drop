@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP test vectors</title>
+<meta name="description" content="Reproducible OP_DROP test vectors: leaf script hex, payload digests, Taproot commit addresses, control blocks, ledger sequences, and invalid cases with their exact reason codes.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/test-vectors.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP test vectors">
+<meta property="og:description" content="Valid and invalid vectors with exact bytes and expected outcomes.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/test-vectors.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html" aria-current="page">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#setup">Shared setup</a></li>
+        <li><a href="#valid">Valid leaves</a></li>
+        <li><a href="#taproot">Commitment vectors</a></li>
+        <li><a href="#invalid">Invalid leaves</a></li>
+        <li><a href="#ledger">Ledger sequences</a></li>
+        <li><a href="#transfer">Transfer sequences</a></li>
+        <li><a href="#reproduce">Reproducing these</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Conformance vectors, spec 1.0.0</p>
+    <h1>Test vectors</h1>
+    <p class="lede">Every byte on this page was produced by the reference OP_DROP encoder and verified by the reference decoder and the reference Taproot commitment check. Paste any leaf hex into the <a href="tool.html">builder and decoder</a> to reproduce the result in your browser.</p>
+
+    <div class="note warn">
+      <p><strong>These are documentation keys.</strong> The key pair below is published so the vectors are reproducible. Never send funds to any address on this page. Anyone can spend from them.</p>
+    </div>
+
+    <h2 id="setup">Shared setup</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Parameters shared by every vector</caption>
+        <tbody>
+          <tr><th>Private key (documentation only)</th><td class="out">4654771a8e22773b5fd328d1ebad41f6c97f637e014984ae03a5d142bf51def1</td></tr>
+          <tr><th>x-only public key</th><td class="out">8836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3b</td></tr>
+          <tr><th>Taproot internal key</th><td class="out">the same x-only key</td></tr>
+          <tr><th>Script tree</th><td class="out">single leaf, tapleaf version 0xc0, depth 0</td></tr>
+          <tr><th>Network</th><td class="out">mainnet (leaf bytes are identical on every network; only the address encoding differs)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="valid">V. Valid leaves</h2>
+
+    <h3>V1. Deploy <code>drop</code></h3>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>Payload</th><td class="out">{"p":"op-drop","op":"deploy","tick":"drop","max":"21000000","lim":"1000"}</td></tr>
+          <tr><th>Payload bytes</th><td class="out">73</td></tr>
+          <tr><th>Payload sha256</th><td class="out">f970d478e38939a89f6d9615aef772e21716dc79e2e752de1dd0539c553b74ca</td></tr>
+          <tr><th>Leaf script</th><td class="out">0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e7520f970d478e38939a89f6d9615aef772e21716dc79e2e752de1dd0539c553b74ca75497b2270223a226f702d64726f70222c226f70223a226465706c6f79222c227469636b223a2264726f70222c226d6178223a223231303030303030222c226c696d223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</td></tr>
+          <tr><th>Leaf script bytes</th><td class="out">177</td></tr>
+          <tr><th>Leaf script sha256</th><td class="out">546e1624adf71006b54721e2a005d6c91af513e3e8b09497e3f19c5b0181d1ec</td></tr>
+          <tr><th>Commit scriptPubKey</th><td class="out">5120f865873be28e8ea28d0f6dd018b94a30ec17b569b2cac767eb7f7b5222e43805</td></tr>
+          <tr><th>Commit address</th><td class="out">bc1plpjcwwlz36829rg0dhgp3w22xrkp0dtfkt9vwelt0aa4yghy8qzsnqwgwm</td></tr>
+          <tr><th>Control block</th><td class="out">c08836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3b</td></tr>
+          <tr><th>Reveal size estimate</th><td class="out">656 weight units, 164 vB (94 base bytes, 278 witness bytes)</td></tr>
+          <tr><th>Expected outcome</th><td class="out">carrier valid; ledger valid if <code>drop</code> has no prior deployment on this network</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>V2. Mint 1000 <code>drop</code></h3>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>Payload</th><td class="out">{"p":"op-drop","op":"mint","tick":"drop","amt":"1000"}</td></tr>
+          <tr><th>Payload bytes</th><td class="out">54</td></tr>
+          <tr><th>Payload sha256</th><td class="out">3c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e1</td></tr>
+          <tr><th>Leaf script</th><td class="out">0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e175367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</td></tr>
+          <tr><th>Leaf script bytes</th><td class="out">158</td></tr>
+          <tr><th>Leaf script sha256</th><td class="out">f80ecba1d440272ecb76343680714a46c92be62e9a97760e700bccb3f5140bad</td></tr>
+          <tr><th>Commit scriptPubKey</th><td class="out">51209194a35d62f90d352729397e55a85100e092049ce27bcd7202c8388c63559d2c</td></tr>
+          <tr><th>Commit address</th><td class="out">bc1pjx22xhtzlyxn2fef89l9t2z3qrsfypyuufau6uszequgcc64n5kqtlwnap</td></tr>
+          <tr><th>Control block</th><td class="out">c18836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3b</td></tr>
+          <tr><th>Reveal size estimate</th><td class="out">637 weight units, 160 vB (94 base bytes, 259 witness bytes)</td></tr>
+          <tr><th>Expected outcome</th><td class="out">carrier valid; ledger credits 1000 to the anchor address if <code>drop</code> is deployed and supply remains</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The control block for V2 begins <code>c1</code> rather than <code>c0</code> because the tweaked output key has odd parity for this leaf. Both are correct; the low bit of the first byte carries the parity.</p>
+
+    <h3>V3. Transfer 250 <code>drop</code></h3>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>Payload</th><td class="out">{"p":"op-drop","op":"transfer","tick":"drop","amt":"250"}</td></tr>
+          <tr><th>Payload bytes</th><td class="out">57</td></tr>
+          <tr><th>Payload sha256</th><td class="out">090455d3d8b15ef3d38e202c8c13033362c58e961f078615a1f1f23df256c13e</td></tr>
+          <tr><th>Leaf script</th><td class="out">0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e7520090455d3d8b15ef3d38e202c8c13033362c58e961f078615a1f1f23df256c13e75397b2270223a226f702d64726f70222c226f70223a227472616e73666572222c227469636b223a2264726f70222c22616d74223a22323530227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</td></tr>
+          <tr><th>Leaf script bytes</th><td class="out">161</td></tr>
+          <tr><th>Leaf script sha256</th><td class="out">e57210d2444c8e6253da80594070177b0d6564248ff18a7b2881665933b2586e</td></tr>
+          <tr><th>Commit scriptPubKey</th><td class="out">51203cde155d12f33c25f52b796b8c924fb87cc69d41025782cfa877117596be7787</td></tr>
+          <tr><th>Commit address</th><td class="out">bc1p8n0p2hgj7v7ztaft094ceyj0hp7vd82pqftc9nagwught947w7rsvapwql</td></tr>
+          <tr><th>Control block</th><td class="out">c18836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3b</td></tr>
+          <tr><th>Reveal size estimate</th><td class="out">640 weight units, 160 vB (94 base bytes, 262 witness bytes)</td></tr>
+          <tr><th>Expected outcome</th><td class="out">carrier valid; ledger reserves 250 and opens a transfer against anchor <code>{revealTxid}:0</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>V4. Largest possible deploy payload</h3>
+    <p>Every field at its maximum: a four-character ticker with <code>max</code> and <code>lim</code> both at 2<sup>64</sup> minus 1. This is the upper bound on a token payload, and it is well below the 256-byte push ceiling.</p>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>Payload</th><td class="out">{"p":"op-drop","op":"deploy","tick":"zzzz","max":"18446744073709551615","lim":"18446744073709551615"}</td></tr>
+          <tr><th>Payload bytes</th><td class="out">101</td></tr>
+          <tr><th>Payload sha256</th><td class="out">d8b26b33fd53926571adbf5ae1c5896662d431405b9ef917d6e3e299e13f51fc</td></tr>
+          <tr><th>Push encoding</th><td class="out">OP_PUSHDATA1 (0x4c 0x65), because 101 is above 75</td></tr>
+          <tr><th>Leaf script bytes</th><td class="out">206</td></tr>
+          <tr><th>Expected outcome</th><td class="out">carrier valid, ledger valid</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="taproot">T. Commitment vectors</h2>
+    <p>These use the V2 leaf and vary only the proof. They separate "this is not an OP_DROP leaf at all" from "this leaf did not belong to the output that was spent".</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Taproot commitment outcomes</caption>
+        <thead><tr><th>#</th><th>Input</th><th>Expected result</th></tr></thead>
+        <tbody>
+          <tr><td>T1</td><td>V2 leaf, control block <code>c18836…bf3b</code>, previous output <code>51209194…9d2c</code></td><td><span class="badge ok">valid</span> The leaf is committed by the spent output.</td></tr>
+          <tr><td>T2</td><td>V2 leaf, V2 control block, previous output belonging to a different Taproot key</td><td><span class="badge no">invalid_taproot_commitment</span> Reason text: Taproot leaf does not commit to previous output.</td></tr>
+          <tr><td>T3</td><td>V2 leaf, V2 control block, previous output <code>0014</code> followed by 20 zero bytes (P2WPKH)</td><td><span class="badge no">invalid_taproot_commitment</span> Reason text: previous output is not P2TR.</td></tr>
+          <tr><td>T4</td><td>V2 leaf, control block with first byte changed to <code>c2</code></td><td><span class="badge no">invalid_taproot_commitment</span> Reason text: unsupported Taproot leaf version.</td></tr>
+          <tr><td>T5</td><td>V2 leaf, control block of 65 bytes (a one-level tree path)</td><td><span class="badge no">not an OP_DROP reveal</span> The witness fails OD-3.2, so no event is recorded at all.</td></tr>
+          <tr><td>T6</td><td>Witness with four items (signature, script, control block, annex)</td><td><span class="badge no">not an OP_DROP reveal</span> The witness fails OD-3.1.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="invalid">I. Invalid leaves</h2>
+    <p>Each of these is a complete script hex. Paste any of them into the <a href="tool.html">decoder</a> to see the same message.</p>
+
+    <h3>I1. Non-minimal push encoding</h3>
+    <p>The V2 leaf with the 14-byte marker re-encoded using <code>OP_PUSHDATA1</code> (<code>4c 0e</code>) instead of a direct push. Every field decodes identically. It is still invalid.</p>
+    <pre><code>4c0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e175367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-4.8. Not recorded as an event.</p>
+
+    <h3>I2. Unknown carrier marker</h3>
+    <p>The V2 leaf with the marker changed to <code>bip110-op-drip</code>.</p>
+    <pre><code>0e6269703131302d6f702d6472697075106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e175367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-4.1. Not recorded as an event.</p>
+
+    <h3>I3. Digest does not match the payload</h3>
+    <p>The V2 leaf with the final byte of the digest field changed from <code>e1</code> to <code>e0</code>.</p>
+    <pre><code>0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e075367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-4.3. Not recorded as an event.</p>
+
+    <h3>I4. Reordered payload keys</h3>
+    <p>A well-formed leaf whose payload is <code>{"op":"mint","p":"op-drop","tick":"drop","amt":"1000"}</code>. The digest matches the payload; only the key order is wrong.</p>
+    <pre><code>0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75202da4f53ea09fdcfa8b20793398294870c00d671c7cd51cbeb949bbfdab3b35a175367b226f70223a226d696e74222c2270223a226f702d64726f70222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-6.6. Not recorded as an event.</p>
+
+    <h3>I5. Whitespace in the payload</h3>
+    <p>Payload <code>{"p": "op-drop", "op": "mint", "tick": "drop", "amt": "1000"}</code>, 61 bytes instead of 54, with a matching digest.</p>
+    <pre><code>0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e75206dabec6b4ddc3f46f53da8e34ad2f11544c82ec1d1b869b3e44fff35bb3c4280753d7b2270223a20226f702d64726f70222c20226f70223a20226d696e74222c20227469636b223a202264726f70222c2022616d74223a202231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-6.12. Not recorded as an event.</p>
+
+    <h3>I6. Five-character ticker</h3>
+    <p>Payload <code>{"p":"op-drop","op":"mint","tick":"drops","amt":"1000"}</code>.</p>
+    <pre><code>0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e752004ae962007e5de7d7d56494e2181850272c6fb1168a672a86c03bd599e97d23375377b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f7073222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rule OD-6.5. Not recorded as an event.</p>
+
+    <h3>I7. A conditional opcode in the grammar</h3>
+    <p>The V2 leaf with the first <code>OP_DROP</code> (<code>75</code>) replaced by <code>OP_IF</code> (<code>63</code>). This is roughly what a witness envelope looks like at that position, and it is exactly what OP_DROP refuses.</p>
+    <pre><code>0e6269703131302d6f702d64726f7063106170706c69636174696f6e2f6a736f6e75203c0153364dd98ded936f3d29a89959c6ca0e294540746e543037cbcfc33912e175367b2270223a226f702d64726f70222c226f70223a226d696e74222c227469636b223a2264726f70222c22616d74223a2231303030227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</code></pre>
+    <p><span class="badge no">rejected</span> Rules OD-4.6 and OD-4.9. Not recorded as an event.</p>
+
+    <h3>I8. Carrier valid, ledger invalid</h3>
+    <p>A deploy carrying <code>self_mint</code>. The leaf parses, the digest matches, the push encoding is minimal, and the Taproot proof would succeed. The ledger still refuses it.</p>
+    <div class="tablewrap">
+      <table>
+        <tbody>
+          <tr><th>Payload</th><td class="out">{"p":"op-drop","op":"deploy","tick":"demo","max":"21000000","lim":"1000","self_mint":"true"}</td></tr>
+          <tr><th>Payload bytes</th><td class="out">92 (encoded with OP_PUSHDATA1, 0x4c 0x5c)</td></tr>
+          <tr><th>Payload sha256</th><td class="out">b197c20f43a1d8cd3ca7fc7fe1c9c10328efaf4b8656d53f198a134774aa4e72</td></tr>
+          <tr><th>Leaf script</th><td class="out">0e6269703131302d6f702d64726f7075106170706c69636174696f6e2f6a736f6e7520b197c20f43a1d8cd3ca7fc7fe1c9c10328efaf4b8656d53f198a134774aa4e72754c5c7b2270223a226f702d64726f70222c226f70223a226465706c6f79222c227469636b223a2264656d6f222c226d6178223a223231303030303030222c226c696d223a2231303030222c2273656c665f6d696e74223a2274727565227d75208836f3e74b35d5367eb26b762186393bad3cdf669c822772c0a0ee7398aebf3bac</td></tr>
+          <tr><th>Carrier result</th><td class="out"><span class="badge ok">valid</span></td></tr>
+          <tr><th>Ledger result</th><td class="out"><span class="badge no">invalid</span> reason <code>unsupported_self_mint</code>, recorded as an event, no balance change</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>This is the case that shows why the two layers are specified separately. An implementation that only checks the carrier will report this as a successful deploy and be wrong.</p>
+
+    <h2 id="ledger">L. Ledger sequences</h2>
+    <p>Apply these in order on a fresh network. Each row is one event, in the ordering defined by OD-9.1.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>L1: supply arithmetic including the partial final mint</caption>
+        <thead><tr><th>#</th><th>Event</th><th>Result</th><th>Credited</th><th>Minted after</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>deploy tick=test max=100 lim=30</code></td><td><span class="badge ok">valid</span></td><td class="num">-</td><td class="num">0</td></tr>
+          <tr><td>2</td><td><code>deploy tick=test max=999 lim=1</code></td><td><span class="badge no">duplicate_deploy</span></td><td class="num">-</td><td class="num">0</td></tr>
+          <tr><td>3</td><td><code>mint tick=test amt=30</code></td><td><span class="badge ok">valid</span></td><td class="num">30</td><td class="num">30</td></tr>
+          <tr><td>4</td><td><code>mint tick=test amt=31</code></td><td><span class="badge no">mint_limit_exceeded</span></td><td class="num">0</td><td class="num">30</td></tr>
+          <tr><td>5</td><td><code>mint tick=test amt=30</code></td><td><span class="badge ok">valid</span></td><td class="num">30</td><td class="num">60</td></tr>
+          <tr><td>6</td><td><code>mint tick=test amt=30</code></td><td><span class="badge ok">valid</span></td><td class="num">30</td><td class="num">90</td></tr>
+          <tr><td>7</td><td><code>mint tick=test amt=30</code></td><td><span class="badge ok">valid, partial</span></td><td class="num">10</td><td class="num">100</td></tr>
+          <tr><td>8</td><td><code>mint tick=test amt=1</code></td><td><span class="badge no">supply_exhausted</span></td><td class="num">0</td><td class="num">100</td></tr>
+          <tr><td>9</td><td><code>mint tick=zzzz amt=1</code></td><td><span class="badge no">unknown_tick</span></td><td class="num">0</td><td class="num">100</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Event 7 is the case implementers most often get wrong. The request is 30, the remaining supply is 10, the request does not exceed <code>lim</code>, so the event is <strong>valid</strong> and credits 10. It does not fail.</p>
+
+    <h2 id="transfer">X. Transfer sequences</h2>
+    <p>Start with address A holding 1000 available units of <code>test</code>.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>X1: a transfer that settles</caption>
+        <thead><tr><th>#</th><th>Event</th><th>A available</th><th>A reserved</th><th>B available</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>starting state</td><td class="num">1000</td><td class="num">0</td><td class="num">0</td><td>-</td></tr>
+          <tr><td>1</td><td>reveal at A: <code>transfer amt=250</code></td><td class="num">750</td><td class="num">250</td><td class="num">0</td><td><code>transfer_pending</code></td></tr>
+          <tr><td>2</td><td>anchor <code>{tx1}:0</code> spent, output 0 pays B</td><td class="num">750</td><td class="num">0</td><td class="num">250</td><td><code>settled</code></td></tr>
+          <tr><td>3</td><td>a second transaction also references <code>{tx1}:0</code></td><td class="num">750</td><td class="num">0</td><td class="num">250</td><td>no event, already settled</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <caption>X2: a transfer that returns</caption>
+        <thead><tr><th>#</th><th>Event</th><th>A available</th><th>A reserved</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>starting state</td><td class="num">1000</td><td class="num">0</td><td>-</td></tr>
+          <tr><td>1</td><td>reveal at A: <code>transfer amt=250</code></td><td class="num">750</td><td class="num">250</td><td><code>transfer_pending</code></td></tr>
+          <tr><td>2</td><td>anchor spent, output 0 is an <code>OP_RETURN</code></td><td class="num">1000</td><td class="num">0</td><td><code>invalid</code>, <code>invalid_transfer_destination</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <caption>X3: rejected transfers</caption>
+        <thead><tr><th>#</th><th>Event</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>reveal at A: <code>transfer amt=2000</code> while A has 1000 available</td><td><span class="badge no">insufficient_available_balance</span></td></tr>
+          <tr><td>2</td><td>one transaction whose inputs 0 and 1 both carry valid transfer leaves</td><td><span class="badge no">ambiguous_transfer_anchor</span> on both. They would claim the same anchor, so neither is applied.</td></tr>
+          <tr><td>3</td><td>one transaction whose input 0 carries a transfer leaf and input 1 carries a mint leaf</td><td>The transfer applies normally and the mint applies normally. Only competing transfers are ambiguous.</td></tr>
+          <tr><td>4</td><td>a transfer whose reveal transaction has no output 0 address</td><td><span class="badge no">invalid_anchor</span></td></tr>
+          <tr><td>5</td><td>at or above the configured activation height, a transfer whose transaction spends no other input with the same script as output 0</td><td><span class="badge no">missing_transfer_source_authorization</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="reproduce">Reproducing these</h2>
+    <p>Every leaf script above is a pure function of its payload and the x-only key. To reproduce V2 by hand:</p>
+    <ol>
+      <li>Serialize the payload as compact JSON in the required key order and encode it as UTF-8. That is 54 bytes.</li>
+      <li>Take its SHA-256 digest: <code>3c0153…12e1</code>.</li>
+      <li>Concatenate: minimal push of <code>bip110-op-drop</code>, <code>75</code>, minimal push of <code>application/json</code>, <code>75</code>, minimal push of the 32-byte digest, <code>75</code>, minimal push of the 54 payload bytes, <code>75</code>, minimal push of the 32-byte key, <code>ac</code>.</li>
+      <li>The result is 158 bytes and must equal the hex in V2 exactly.</li>
+      <li>Build the tapleaf hash at version <code>0xc0</code>, tweak the internal key with it as the sole leaf, and the output key is <code>9194a3…9d2c</code>.</li>
+    </ol>
+    <p>The <a href="tool.html">builder</a> performs steps 1 to 4 in your browser and shows each intermediate value.</p>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>test-vectors.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/test-vectors.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>
