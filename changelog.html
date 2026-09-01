@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP changelog</title>
+<meta name="description" content="Version history of the OP_DROP specification and its documentation, including what changed at each version and what has never changed.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/changelog.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP changelog">
+<meta property="og:description" content="Specification and documentation version history.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/changelog.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html" aria-current="page">Changelog</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Version history</p>
+    <h1>Changelog</h1>
+    <p class="lede">Two things are versioned here: the specification, and the documents that describe it. The wire format has not changed since it was first published; version 1.0.0 is the first time it was written down as a numbered specification.</p>
+
+    <h2 id="stable">What has never changed</h2>
+    <p>Every one of these has held since the first public document in July 2026, and any change to them would be a new major specification version.</p>
+    <ul>
+      <li>The carrier marker <code>bip110-op-drop</code> and the content type <code>application/json</code>.</li>
+      <li>The ten-element leaf grammar, and the four <code>OP_DROP</code> positions.</li>
+      <li>The protocol identifier <code>"p":"op-drop"</code> and the three operations.</li>
+      <li>Four-character tickers, positive integer strings, and no decimals.</li>
+      <li>Output 0 as the anchor and as the only settlement destination.</li>
+      <li>First valid deploy wins, the partial final mint, and the two-stage transfer.</li>
+    </ul>
+
+    <h2 id="v1">Specification 1.0.0</h2>
+    <p class="label">2026-09-01</p>
+    <p>First numbered publication of the specification, and a rebuild of this repository into an independent documentation site.</p>
+    <h3>Added</h3>
+    <ul>
+      <li>A normative specification with numbered rules <code>OD-1.1</code> through <code>OD-14.4</code>, replacing prose that described the same behaviour without rule identifiers.</li>
+      <li>The transaction anatomy: witness item count, control block constraints, previous output requirements, and the anchor convention, none of which had been documented publicly before.</li>
+      <li>The exact leaf script grammar, including the minimal push encoding requirement and the byte-for-byte rebuild check.</li>
+      <li>The Taproot commitment proof steps.</li>
+      <li>Identifier formats for reveal events, settlement events, and anchors.</li>
+      <li>The deterministic ordering rule, including the operation index and the settlement-before-reveal phase ordering.</li>
+      <li>The complete set of invalid reason codes with the exact condition that produces each.</li>
+      <li>The optional <code>drops-media</code> image attachment format.</li>
+      <li>The seven reduced-data construction limits and how the carrier stays inside each.</li>
+      <li>A <a href="carriers.html">carrier comparison</a> against OP_RETURN, witness envelopes, and Stamps, including where OP_DROP is the worse choice.</li>
+      <li>A <a href="test-vectors.html">test vectors</a> page with real leaf scripts, digests, commit addresses, control blocks, ledger sequences, and invalid cases.</li>
+      <li>A client-side <a href="tool.html">builder and decoder</a> that reproduces the reference encoder byte for byte.</li>
+      <li>An <a href="api.html">API reference</a> for the indexer read contract.</li>
+      <li>Fee and size figures measured from the reference encoder, and standardness and relay considerations.</li>
+      <li>An implementation checklist for encoders, decoders, and indexers.</li>
+    </ul>
+    <h3>Clarified</h3>
+    <ul>
+      <li>The carrier layer and the ledger layer are now specified separately, because a leaf can be a valid carrier and still change no balance. The <code>self_mint</code> case is documented as the worked example of that split.</li>
+      <li>"Reserved" in the interfaces is the same value as <code>transferable</code> in the API.</li>
+      <li>Mempool handling: the ledger never includes it; provisional tracking exists and never affects balances.</li>
+      <li>Reorg handling: automatic recovery is bounded, and deeper divergence requires operator action.</li>
+      <li>Support claims are limited to surfaces that can be verified in Bitcoin Universe source, with marketplace trading marked as feature-gated and selling marked as unsupported.</li>
+    </ul>
+    <h3>Unchanged</h3>
+    <ul>
+      <li>No wire format change. Every leaf and payload that was valid before this version is still valid, and produces the same result.</li>
+    </ul>
+
+    <h2 id="prior">Documentation history</h2>
+    <p>Before version 1.0.0 the rules lived in unversioned markdown under <code>docs/</code>. Those documents are preserved in the repository and remain accurate; the pages on this site supersede them for detail.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Documentation milestones in this repository</caption>
+        <thead><tr><th>Date</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>2026-09-01</td><td>Documentation manifest added, so the central docs platform can ingest this repository.</td></tr>
+          <tr><td>2026-08-29</td><td>Prose brought in line with the workspace text policy.</td></tr>
+          <tr><td>2026-08-19</td><td>The resilient confirmed read path documented: one scanner, API-only replicas, and finalized-hash agreement between two independently operated Bitcoin nodes.</td></tr>
+          <tr><td>2026-07-30</td><td>Public experience streamlined across the guides.</td></tr>
+          <tr><td>2026-07-16</td><td>Integration checklist, contribution guidance, and repeatable documentation validation added.</td></tr>
+          <tr><td>2026-07-16</td><td>First public documentation of OP_DROP: event format, indexing rules, design rationale, and the BIP-110 scope note.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="policy">Versioning policy</h2>
+    <ul>
+      <li><strong>Major.</strong> Any change that makes a previously valid leaf invalid, or a previously invalid leaf valid, or that changes a resulting balance.</li>
+      <li><strong>Minor.</strong> A new optional capability that older implementations can ignore without diverging.</li>
+      <li><strong>Patch.</strong> Clarification, corrections, and new examples, with no behaviour change.</li>
+      <li>Lifecycle is experimental, so a major change is possible. Any such change will appear here, with its rationale, before it is deployed.</li>
+      <li>There is no version field in the payload. The grammar itself is the version, which means a major change would need a new marker rather than a new field.</li>
+    </ul>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>changelog.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/changelog.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>
