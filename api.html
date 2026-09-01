@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP indexer API reference</title>
+<meta name="description" content="The OP_DROP indexer HTTP contract: read endpoints for tokens, balances, events, the launch manifest, and scanner status, with exact response schemas and error shapes.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/api.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP indexer API reference">
+<meta property="og:description" content="Read endpoints, response schemas, and the rules for consuming them safely.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/api.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html" aria-current="page">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#boundary">Service boundary</a></li>
+        <li><a href="#conventions">Conventions</a></li>
+        <li><a href="#endpoints">Endpoints</a></li>
+        <li><a href="#schemas">Schemas</a></li>
+        <li><a href="#errors">Errors</a></li>
+        <li><a href="#artifacts">Artifact surface</a></li>
+        <li><a href="#consuming">Consuming safely</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">API reference, contract version 1.0.0</p>
+    <h1>Indexer API</h1>
+    <p class="lede">The OP_DROP indexer exposes a small read-only HTTP contract over the confirmed ledger. This page documents that contract: paths, parameters, and response shapes.</p>
+
+    <div class="note warn">
+      <p><strong>No base URL is published here.</strong> The origin is supplied by whoever operates a deployment, and it is not a browser-facing endpoint. Browsers must never call an OP_DROP indexer directly; a first-party application backend holds the origin and proxies what it needs. The indexer's database is private service state and must not be read or written by other services.</p>
+    </div>
+
+    <h2 id="boundary">Service boundary</h2>
+    <p>The indexer owns confirmed-chain scanning, leaf validation, token state, balances, events, and launch metadata. It is the source of truth for OP_DROP protocol state within a deployment. It does not create transactions, hold keys, or broadcast: those belong to the application that builds an order.</p>
+    <ul>
+      <li>Read endpoints under <code>/op-drop/*</code> require no authentication.</li>
+      <li>There is one operator-only scan trigger. It is disabled unless an operator token is configured, it must stay behind operator access control, and it is not part of the surface an application should use. It is intentionally not documented here.</li>
+      <li>There is no global path prefix. The routes below are exact.</li>
+    </ul>
+
+    <h2 id="conventions">Conventions</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Rules that apply to every response</caption>
+        <tbody>
+          <tr><th>Amounts</th><td>Always decimal <strong>strings</strong>, never JSON numbers, so full 64-bit and 128-bit precision survives. Never parse them as floating point.</td></tr>
+          <tr><th>Network</th><td>One of <code>mainnet</code>, <code>testnet</code>, <code>signet</code>, <code>regtest</code>, fixed per deployment. A response never mixes networks.</td></tr>
+          <tr><th>Confirmed only</th><td>Every figure reflects confirmed state at the deployment's confirmation depth. Mempool activity is never included.</td></tr>
+          <tr><th>Paging</th><td><code>start</code> is an offset from 0 to 10000000, default 0. <code>limit</code> is 1 to 100, default 20.</td></tr>
+          <tr><th>Filters</th><td>Exact match after trimming and case normalisation, not patterns. A malformed value matches nothing rather than erroring.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="endpoints">Endpoints</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>The read surface</caption>
+        <thead><tr><th>Method and path</th><th>Purpose</th><th>Parameters</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>GET /op-drop/health</code></td>
+            <td>Liveness. Returns <code>{"status":"ok","protocol":"op-drop"}</code> while the process is up.</td>
+            <td>none</td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/launch/drop</code></td>
+            <td>The launch manifest for <code>$DROP</code>: the fixed anchor convention and the exact deploy payload.</td>
+            <td>none</td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/tokens</code></td>
+            <td>Paginated list of deployments.</td>
+            <td><code>tick</code>, <code>sort</code> (<code>deploy</code>, <code>holders</code>, <code>minted</code>; default <code>deploy</code>), <code>start</code>, <code>limit</code></td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/tokens/{tick}</code></td>
+            <td>One deployment plus up to its 100 most recent events. 404 when the ticker has no valid deployment.</td>
+            <td><code>tick</code> in the path, case-insensitive and trimmed</td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/balances/{address}</code></td>
+            <td>Confirmed balances for one address. Only tickers with a non-zero available or reserved balance are included.</td>
+            <td><code>address</code> in the path</td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/events</code></td>
+            <td>Paginated event ledger, including invalid events.</td>
+            <td><code>tick</code>, <code>address</code>, <code>txid</code>, <code>start</code>, <code>limit</code></td>
+          </tr>
+          <tr>
+            <td><code>GET /op-drop/indexer/status</code></td>
+            <td>Scanner cursor and configuration: network, start height, confirmation depth, poll interval, batch size, and last processed block.</td>
+            <td>none</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="schemas">Response schemas</h2>
+
+    <h3>Launch manifest</h3>
+    <p><code>GET /op-drop/launch/drop</code></p>
+<pre><code>{
+  "protocol": "op-drop",
+  "anchor": {
+    "revealOutput": 0,
+    "transferSettlement": "first confirmed spend credits spender transaction output 0"
+  },
+  "launch": {
+    "display": "$DROP",
+    "tick": "drop",
+    "max": "21000000",
+    "lim": "1000",
+    "fullLimitMintCount": "21000",
+    "deploymentJson": "{\"p\":\"op-drop\",\"op\":\"deploy\",\"tick\":\"drop\",\"max\":\"21000000\",\"lim\":\"1000\"}"
+  }
+}</code></pre>
+    <p>Compare <code>deploymentJson</code> byte for byte against what you intend to sign. It is the only field on this endpoint that is worth verifying.</p>
+
+    <h3>Deployment</h3>
+    <div class="tablewrap">
+      <table>
+        <caption>Fields of a deployment object</caption>
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>tick</code></td><td>string</td><td>The wire ticker.</td></tr>
+          <tr><td><code>max</code></td><td>decimal string</td><td>Maximum supply.</td></tr>
+          <tr><td><code>lim</code></td><td>decimal string</td><td>Limit per mint.</td></tr>
+          <tr><td><code>fullLimitMints</code></td><td>decimal string</td><td>Number of full-limit mints that would exhaust the supply.</td></tr>
+          <tr><td><code>finalLimitMintRemainder</code></td><td>decimal string</td><td>What a final partial mint would receive.</td></tr>
+          <tr><td><code>minted</code></td><td>decimal string</td><td>Minted supply so far.</td></tr>
+          <tr><td><code>remaining</code></td><td>decimal string</td><td><code>max - minted</code>.</td></tr>
+          <tr><td><code>progress</code></td><td>number</td><td>Percent minted, 0 to 100, rounded to two decimals. The only floating-point field in the contract, and it is presentational.</td></tr>
+          <tr><td><code>mints</code></td><td>integer</td><td>Count of valid mint events.</td></tr>
+          <tr><td><code>holders</code></td><td>integer</td><td>Addresses with a non-zero available or reserved balance.</td></tr>
+          <tr><td><code>deploy</code></td><td>object</td><td><code>eventId</code>, <code>txid</code>, <code>height</code>, <code>owner</code> of the winning deploy.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Balances</h3>
+    <p><code>GET /op-drop/balances/{address}</code></p>
+<pre><code>{
+  "address": "bc1p…",
+  "balances": [
+    { "tick": "drop", "available": "750", "transferable": "250", "total": "1000" }
+  ]
+}</code></pre>
+    <p><code>transferable</code> is the field name for what the interfaces call "reserved": units held by an unsettled transfer. <code>total</code> is always <code>available + transferable</code>, so never add them yourself on top of <code>total</code>.</p>
+
+    <h3>Event</h3>
+    <div class="tablewrap">
+      <table>
+        <caption>Fields of an event object</caption>
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><code>eventId</code></td><td>string</td><td><code>{txid}:i{vin}:w1</code> or <code>{txid}:s{vin}:{transferEventId}</code>.</td></tr>
+          <tr><td><code>height</code>, <code>blockHash</code>, <code>txid</code></td><td>integer, string, string</td><td>Where the event was found.</td></tr>
+          <tr><td><code>action</code></td><td>enum</td><td><code>deploy</code>, <code>mint</code>, <code>transfer</code>, <code>transfer_settle</code>.</td></tr>
+          <tr><td><code>tick</code></td><td>string or null</td><td>The ticker.</td></tr>
+          <tr><td><code>requestedAmount</code></td><td>decimal string or null</td><td>What the payload asked for. Null on a deploy.</td></tr>
+          <tr><td><code>amount</code></td><td>decimal string or null</td><td>What was actually credited. Null until the event is finalized. Differs from <code>requestedAmount</code> on a partial final mint.</td></tr>
+          <tr><td><code>owner</code></td><td>string or null</td><td>The anchor address, or on a settlement the destination address.</td></tr>
+          <tr><td><code>anchor</code></td><td>string or null</td><td><code>{txid}:{vout}</code>.</td></tr>
+          <tr><td><code>sourceTransferEventId</code></td><td>string or null</td><td>On a settlement, the transfer it settles.</td></tr>
+          <tr><td><code>status</code></td><td>enum</td><td><code>valid</code>, <code>invalid</code>, <code>transfer_pending</code>, <code>settled</code>.</td></tr>
+          <tr><td><code>reason</code></td><td>enum or null</td><td>One of the codes in <a href="specification.html#invalid">section 11</a>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Comparing <code>requestedAmount</code> with <code>amount</code> is the cleanest way to spot a partial final mint: they differ only in that case.</p>
+
+    <h3>Indexer status</h3>
+<pre><code>{
+  "enabled": true,
+  "configured": true,
+  "network": "mainnet",
+  "startHeight": 0,
+  "confirmations": 6,
+  "pollSeconds": 15,
+  "batchBlocks": 10,
+  "nextHeight": 0,
+  "lastProcessedHeight": 0,
+  "lastBlockHash": null
+}</code></pre>
+    <p>The values shown are the shape, not any deployment's real cursor. Use <code>lastProcessedHeight</code> against your own node's tip to judge freshness, and <code>confirmations</code> to know how deep an event must be before it counts.</p>
+
+    <h2 id="errors">Errors</h2>
+    <p>Errors use the framework's default HTTP exception body.</p>
+<pre><code>{ "statusCode": 404, "error": "Not Found", "message": "OP-DROP token drop not found" }</code></pre>
+    <div class="tablewrap">
+      <table>
+        <caption>Status codes you will see</caption>
+        <thead><tr><th>Code</th><th>When</th></tr></thead>
+        <tbody>
+          <tr><td class="num">200</td><td>Success, including an empty list.</td></tr>
+          <tr><td class="num">400</td><td>Invalid parameters, for example <code>start</code> outside 0 to 10000000 or <code>limit</code> outside 1 to 100, or a missing address.</td></tr>
+          <tr><td class="num">404</td><td>No deployment for the requested ticker.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><code>message</code> is usually a single string and may be an array when several validation errors are aggregated. Treat it as human-readable text, not as a stable machine code. The stable machine codes are the <code>reason</code> values on events.</p>
+
+    <h2 id="artifacts">Related: the raw artifact surface</h2>
+    <p>The same service also indexes every confirmed reveal as a raw artifact, whether or not it carries an OP_DROP token operation. That surface belongs to the <strong>DROPS</strong> protocol rather than to OP_DROP, and it is documented separately. Two facts are worth knowing here because they cross the boundary:</p>
+    <ul>
+      <li>An artifact identity is <code>drops:&lt;network&gt;:&lt;txid&gt;:d&lt;vinIndex&gt;</code>, which is the same reveal input that produces an OP_DROP event id of <code>{txid}:i{vinIndex}:w1</code>.</li>
+      <li>An artifact body is at most 256 bytes, matching the carrier's push limit, and is served with its committed MIME type and a content-addressed cache identity.</li>
+    </ul>
+    <p>Do not read artifact presence as an OP_DROP token event. A reveal can be indexed as an artifact and still be an invalid OP_DROP event, or carry no token payload at all.</p>
+
+    <h2 id="consuming">Consuming safely</h2>
+    <ol>
+      <li><strong>Keep the origin server-side.</strong> Proxy through your own backend. Do not put an indexer origin in a browser bundle.</li>
+      <li><strong>Treat amounts as strings.</strong> Every balance, supply, and amount field is a decimal string precisely so it does not lose precision. Parsing to a JavaScript number silently corrupts values above 2<sup>53</sup>.</li>
+      <li><strong>Check freshness before you trust totals.</strong> Compare <code>lastProcessedHeight</code> with your node's tip.</li>
+      <li><strong>An empty result is not proof.</strong> It can mean the scanner is behind, or that a valid deploy has not reached the confirmation depth yet.</li>
+      <li><strong>Handle reversal.</strong> A recent event can disappear after a reorg. Do not treat a shallow event as final.</li>
+      <li><strong>Do not mix protocols.</strong> An Ordinals or BRC-20 balance is not an OP_DROP balance, and an artifact is not a token event.</li>
+      <li><strong>Verify what matters yourself.</strong> For anything valuable, re-derive the result from block data using the <a href="specification.html">specification</a> instead of trusting a single indexer.</li>
+    </ol>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>api.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/api.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

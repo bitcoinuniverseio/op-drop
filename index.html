@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP: a Bitcoin data carrier that pushes a payload and drops it</title>
+<meta name="description" content="OP_DROP is a Bitcoin Universe original data carrier. A payload is pushed inside a Taproot leaf script and removed from the stack by the OP_DROP opcode, giving a carrier distinct from witness-envelope inscriptions and from OP_RETURN.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="OP_DROP: a Bitcoin data carrier that pushes a payload and drops it">
+<meta property="og:description" content="The authoritative home of the OP_DROP carrier design: specification, carrier comparison, test vectors, and a client-side script builder and decoder.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta property="og:site_name" content="OP_DROP protocol documentation">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off" aria-describedby="search-hint">
+        <span id="search-hint" class="skip">Press the slash key to focus search.</span>
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./" aria-current="page">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">Elsewhere</span>
+    <nav aria-label="External links">
+      <ul>
+        <li><a href="https://github.com/bitcoinuniverseio/op-drop">Source repository</a></li>
+        <li><a href="https://docs.bitcoinuniverse.io">Bitcoin Universe docs</a></li>
+        <li><a href="https://github.com/bitcoinuniverseio/op-drop/security/advisories/new">Report a vulnerability</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <div class="hero">
+      <p class="kicker">Bitcoin Universe original protocol</p>
+      <h1>A payload you push, then drop</h1>
+      <p class="lede">OP_DROP carries data inside a Taproot leaf script. The payload is pushed onto the stack as an ordinary data push, and the very next opcode, <code>OP_DROP</code>, removes it again. The bytes are committed to the blockchain and provable, but they never take part in whether the spend succeeds.</p>
+    </div>
+
+    <div class="specplate">
+      <div><div class="k">Lifecycle</div><div class="v">Experimental</div></div>
+      <div><div class="k">Chain</div><div class="v">Bitcoin</div></div>
+      <div><div class="k">Networks</div><div class="v">mainnet, testnet, signet, regtest</div></div>
+      <div><div class="k">Spec version</div><div class="v">1.0.0</div></div>
+      <div><div class="k">JSON protocol</div><div class="v">op-drop</div></div>
+      <div><div class="k">Carrier marker</div><div class="v">bip110-op-drop</div></div>
+      <div><div class="k">Tapleaf version</div><div class="v">0xc0</div></div>
+      <div><div class="k">Max data push</div><div class="v">256 bytes</div></div>
+    </div>
+
+    <h2 id="mechanism">The mechanism</h2>
+    <p>Bitcoin script has an opcode whose entire job is to throw away the top stack item. OP_DROP uses that opcode as a carrier. A leaf script pushes five fields, and after each of the first four it runs <code>OP_DROP</code>. What is left on the stack at the end is a public key and a signature check, so the leaf spends exactly like an ordinary key path would.</p>
+
+    <figure class="figscroll figwide">
+      <svg viewBox="0 0 720 420" role="img" aria-labelledby="fig-explode-t fig-explode-d">
+        <title id="fig-explode-t">Exploded view of an OP_DROP leaf script</title>
+        <desc id="fig-explode-d">The leaf script is drawn as five stacked parts. Part 1 is the 14-byte marker string bip110-op-drop followed by OP_DROP. Part 2 is the 16-byte content type application slash json followed by OP_DROP. Part 3 is the 32-byte SHA-256 digest of the payload followed by OP_DROP. Part 4 is the JSON payload itself, highlighted, followed by OP_DROP. Part 5 is the 32-byte x-only public key followed by OP_CHECKSIG, which is the only part that affects whether the spend succeeds. Leader lines connect each part to a note on the right.</desc>
+
+        <text class="d-cap" x="8" y="16">Leaf script, tapleaf version 0xc0</text>
+        <text class="d-cap" x="452" y="16">Function</text>
+        <line x1="440" y1="24" x2="440" y2="404" class="d-lead" stroke-dasharray="2 4"></line>
+
+        <!-- part 1 -->
+        <g>
+          <rect x="46" y="30" width="300" height="46" class="d-box"></rect>
+          <text class="d-tm" x="58" y="52">PUSH "bip110-op-drop"</text>
+          <text class="d-tmute" x="58" y="67">14 bytes</text>
+          <rect x="346" y="30" width="76" height="46" class="d-box"></rect>
+          <text class="d-tm" x="356" y="58">OP_DROP</text>
+          <circle cx="24" cy="53" r="11" class="d-num"></circle>
+          <circle cx="24" cy="53" r="11" class="d-numring"></circle>
+          <text class="d-numtext" x="24" y="57" text-anchor="middle">1</text>
+          <path d="M422 53 H452" class="d-lead"></path>
+          <text class="d-t" x="458" y="50">Fixed carrier marker.</text>
+          <text class="d-tmute" x="458" y="65">Selects the OP_DROP grammar.</text>
+        </g>
+
+        <!-- part 2 -->
+        <g>
+          <rect x="46" y="106" width="300" height="46" class="d-box"></rect>
+          <text class="d-tm" x="58" y="128">PUSH "application/json"</text>
+          <text class="d-tmute" x="58" y="143">16 bytes</text>
+          <rect x="346" y="106" width="76" height="46" class="d-box"></rect>
+          <text class="d-tm" x="356" y="134">OP_DROP</text>
+          <circle cx="24" cy="129" r="11" class="d-num"></circle>
+          <circle cx="24" cy="129" r="11" class="d-numring"></circle>
+          <text class="d-numtext" x="24" y="133" text-anchor="middle">2</text>
+          <path d="M422 129 H452" class="d-lead"></path>
+          <text class="d-t" x="458" y="126">Declared content type.</text>
+          <text class="d-tmute" x="458" y="141">Always application/json.</text>
+        </g>
+
+        <!-- part 3 -->
+        <g>
+          <rect x="46" y="182" width="300" height="46" class="d-box"></rect>
+          <text class="d-tm" x="58" y="204">PUSH &lt;sha256 of payload&gt;</text>
+          <text class="d-tmute" x="58" y="219">32 bytes</text>
+          <rect x="346" y="182" width="76" height="46" class="d-box"></rect>
+          <text class="d-tm" x="356" y="210">OP_DROP</text>
+          <circle cx="24" cy="205" r="11" class="d-num"></circle>
+          <circle cx="24" cy="205" r="11" class="d-numring"></circle>
+          <text class="d-numtext" x="24" y="209" text-anchor="middle">3</text>
+          <path d="M422 205 H452" class="d-lead"></path>
+          <text class="d-t" x="458" y="202">Digest of part 4.</text>
+          <text class="d-tmute" x="458" y="217">Must match, or the leaf is rejected.</text>
+        </g>
+
+        <!-- part 4, the payload -->
+        <g>
+          <rect x="46" y="258" width="300" height="46" class="d-box-a"></rect>
+          <text class="d-ta" x="58" y="280">PUSH &lt;JSON payload&gt;</text>
+          <text class="d-tmute" x="58" y="295">1 to 256 bytes</text>
+          <rect x="346" y="258" width="76" height="46" class="d-box"></rect>
+          <text class="d-tm" x="356" y="286">OP_DROP</text>
+          <circle cx="24" cy="281" r="11" class="d-num"></circle>
+          <circle cx="24" cy="281" r="11" class="d-numring"></circle>
+          <text class="d-numtext" x="24" y="285" text-anchor="middle">4</text>
+          <path d="M422 281 H452" class="d-lead-a"></path>
+          <text class="d-ta" x="458" y="278">The carried data.</text>
+          <text class="d-tmute" x="458" y="293">Pushed, then dropped, never executed.</text>
+        </g>
+
+        <!-- part 5 -->
+        <g>
+          <rect x="46" y="334" width="300" height="46" class="d-box"></rect>
+          <text class="d-tm" x="58" y="356">PUSH &lt;x-only public key&gt;</text>
+          <text class="d-tmute" x="58" y="371">32 bytes</text>
+          <rect x="346" y="334" width="76" height="46" class="d-box"></rect>
+          <text class="d-tm" x="352" y="362">OP_CHECKSIG</text>
+          <circle cx="24" cy="357" r="11" class="d-num"></circle>
+          <circle cx="24" cy="357" r="11" class="d-numring"></circle>
+          <text class="d-numtext" x="24" y="361" text-anchor="middle">5</text>
+          <path d="M422 357 H452" class="d-lead"></path>
+          <text class="d-t" x="458" y="354">The only executing part.</text>
+          <text class="d-tmute" x="458" y="369">Decides whether the spend is valid.</text>
+        </g>
+
+        <text class="d-cap" x="8" y="404">Parts 1 to 4 leave no trace on the stack</text>
+      </svg>
+      <figcaption>Exploded view of the leaf script. Parts 1 to 4 are pure data: each is pushed and immediately removed by <code>OP_DROP</code>. Only part 5 affects consensus validity.</figcaption>
+    </figure>
+
+    <h2 id="stack">The stack, step by step</h2>
+    <p>Bitcoin script is a stack machine. The witness supplies the signature first, then the leaf script runs. Following the stack top to bottom makes the design obvious: the payload occupies the stack for exactly one opcode.</p>
+
+    <figure class="figscroll figwide">
+      <svg viewBox="0 0 720 340" role="img" aria-labelledby="fig-stack-t fig-stack-d">
+        <title id="fig-stack-t">Stack contents at each step of an OP_DROP leaf</title>
+        <desc id="fig-stack-d">Eleven columns show the stack after each script element. The stack starts holding only the witness signature. Each data push adds one item, drawn as a box above the signature, and the following OP_DROP removes it again, so the stack returns to holding just the signature. The fourth push, the JSON payload, is highlighted. After the final push of the public key, OP_CHECKSIG consumes both the key and the signature and leaves a single true value.</desc>
+
+        <line x1="20" y1="250" x2="704" y2="250" class="d-lead"></line>
+        <text class="d-cap" x="20" y="24">Stack after each element (bottom of stack at the line)</text>
+
+        <!-- columns: x centers every 62px starting at 46 -->
+        <g>
+          <!-- 0 initial -->
+          <rect x="26" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="46" y="238" text-anchor="middle">sig</text>
+          <text class="d-cap" x="46" y="266" text-anchor="middle">start</text>
+          <text class="d-tmute" x="46" y="290" text-anchor="middle">witness</text>
+
+          <!-- 1 push marker -->
+          <rect x="88" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="108" y="238" text-anchor="middle">sig</text>
+          <rect x="88" y="190" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="108" y="208" text-anchor="middle">mark</text>
+          <text class="d-cap" x="108" y="266" text-anchor="middle">push</text>
+          <text class="d-tmute" x="108" y="290" text-anchor="middle">1</text>
+
+          <!-- 2 drop -->
+          <rect x="150" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="170" y="238" text-anchor="middle">sig</text>
+          <rect x="150" y="190" width="40" height="26" class="d-box-mute"></rect>
+          <text class="d-cap" x="170" y="266" text-anchor="middle">drop</text>
+          <text class="d-tmute" x="170" y="290" text-anchor="middle">2</text>
+
+          <!-- 3 push ct -->
+          <rect x="212" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="232" y="238" text-anchor="middle">sig</text>
+          <rect x="212" y="190" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="232" y="208" text-anchor="middle">type</text>
+          <text class="d-cap" x="232" y="266" text-anchor="middle">push</text>
+          <text class="d-tmute" x="232" y="290" text-anchor="middle">3</text>
+
+          <!-- 4 drop -->
+          <rect x="274" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="294" y="238" text-anchor="middle">sig</text>
+          <rect x="274" y="190" width="40" height="26" class="d-box-mute"></rect>
+          <text class="d-cap" x="294" y="266" text-anchor="middle">drop</text>
+          <text class="d-tmute" x="294" y="290" text-anchor="middle">4</text>
+
+          <!-- 5 push hash -->
+          <rect x="336" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="356" y="238" text-anchor="middle">sig</text>
+          <rect x="336" y="190" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="356" y="208" text-anchor="middle">hash</text>
+          <text class="d-cap" x="356" y="266" text-anchor="middle">push</text>
+          <text class="d-tmute" x="356" y="290" text-anchor="middle">5</text>
+
+          <!-- 6 drop -->
+          <rect x="398" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="418" y="238" text-anchor="middle">sig</text>
+          <rect x="398" y="190" width="40" height="26" class="d-box-mute"></rect>
+          <text class="d-cap" x="418" y="266" text-anchor="middle">drop</text>
+          <text class="d-tmute" x="418" y="290" text-anchor="middle">6</text>
+
+          <!-- 7 push payload -->
+          <rect x="460" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="480" y="238" text-anchor="middle">sig</text>
+          <rect x="460" y="190" width="40" height="26" class="d-box-a"></rect>
+          <text class="d-ta" x="480" y="208" text-anchor="middle">data</text>
+          <text class="d-cap" x="480" y="266" text-anchor="middle">push</text>
+          <text class="d-tmute" x="480" y="290" text-anchor="middle">7</text>
+          <path d="M480 178 v-24" class="d-lead-a"></path>
+          <path d="M476 154 h8 l-4 -8 z" class="d-arrow-a"></path>
+          <text class="d-ta" x="480" y="142" text-anchor="middle">payload</text>
+
+          <!-- 8 drop -->
+          <rect x="522" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="542" y="238" text-anchor="middle">sig</text>
+          <rect x="522" y="190" width="40" height="26" class="d-box-mute"></rect>
+          <text class="d-cap" x="542" y="266" text-anchor="middle">drop</text>
+          <text class="d-tmute" x="542" y="290" text-anchor="middle">8</text>
+          <path d="M542 186 v-32" class="d-lead-a" stroke-dasharray="3 3"></path>
+          <path d="M538 154 h8 l-4 -8 z" class="d-arrow-a"></path>
+          <text class="d-ta" x="542" y="142" text-anchor="middle">removed</text>
+
+          <!-- 9 push key -->
+          <rect x="584" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="604" y="238" text-anchor="middle">sig</text>
+          <rect x="584" y="190" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="604" y="208" text-anchor="middle">key</text>
+          <text class="d-cap" x="604" y="266" text-anchor="middle">push</text>
+          <text class="d-tmute" x="604" y="290" text-anchor="middle">9</text>
+
+          <!-- 10 checksig -->
+          <rect x="646" y="220" width="40" height="26" class="d-box"></rect>
+          <text class="d-tmute" x="666" y="238" text-anchor="middle">true</text>
+          <text class="d-cap" x="666" y="266" text-anchor="middle">checksig</text>
+          <text class="d-tmute" x="666" y="290" text-anchor="middle">10</text>
+        </g>
+
+        <text class="d-tmute" x="20" y="322">The payload is on the stack for one opcode, then it is gone. The leaf ends the way a plain key spend ends: one true value.</text>
+      </svg>
+      <figcaption>The stack never carries the payload into a decision. That is the entire design: commit data in the script, prove it with the Taproot commitment, and keep the spend condition a single signature check.</figcaption>
+    </figure>
+
+    <h2 id="why">Why build another carrier</h2>
+    <p>Bitcoin already has ways to attach data. Each of them makes a trade you cannot undo later. OP_RETURN puts bytes in an output script, cheap to prune but small and permanently visible to every node's policy checks. Witness envelopes (the Ordinals construction) wrap arbitrary content inside an <code>OP_FALSE OP_IF ... OP_ENDIF</code> block that is never executed, which is cheap thanks to the witness discount but relies on a branch that is skipped rather than evaluated. Stamps deliberately place data in outputs that cannot be pruned at all.</p>
+    <p>OP_DROP takes a fourth position. The payload sits in the witness (so it gets the witness discount), it is inside code that <em>does</em> execute (the push and the drop both run), and there is no conditional branch anywhere in the script. The whole leaf is five pushes and five opcodes with a fixed shape, which makes both the encoder and the validator small.</p>
+    <p>The honest version of that comparison, including the places OP_DROP is worse, is on the <a href="carriers.html">carrier comparison</a> page.</p>
+
+    <h2 id="two-layers">Two layers, one name</h2>
+    <p>Read the name carefully, because OP_DROP describes two things that are specified separately.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>The carrier and the ledger are separate</caption>
+        <thead><tr><th>Layer</th><th>What it fixes</th><th>Identifier</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Carrier</strong></td><td>The exact leaf script grammar, the Taproot commitment proof, and the 256-byte push bound. A leaf either parses or it does not.</td><td><code>bip110-op-drop</code> (internal marker string, never a user-facing name)</td></tr>
+          <tr><td><strong>Ledger</strong></td><td>What the carried JSON means: deploy, mint, transfer, supply accounting, and balances.</td><td><code>"p":"op-drop"</code> (the public protocol identifier)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A leaf can be a perfectly valid carrier and still change no balance, because the ledger applies a narrower profile on top. The <a href="test-vectors.html">test vectors</a> include cases that pass one layer and fail the other.</p>
+
+    <h2 id="who">Who this is for</h2>
+    <ul>
+      <li><strong>Protocol implementers</strong> building an encoder, a decoder, or an independent indexer. Start at the <a href="specification.html">specification</a> and check yourself against the <a href="test-vectors.html">test vectors</a>.</li>
+      <li><strong>Application developers</strong> integrating OP_DROP reads. Start at the <a href="api.html">API reference</a>.</li>
+      <li><strong>Indexer operators</strong> who need the confirmation, ordering, and reorg semantics. Start at the <a href="reference.html">reference</a>.</li>
+      <li><strong>Holders and users</strong> who want to know what a wallet is asking them to sign. Start at the <a href="guide.html">guide</a>.</li>
+    </ul>
+
+    <h2 id="entry">Entry points</h2>
+    <div class="cards">
+      <a class="card" href="specification.html"><h3>Specification</h3><p>Numbered normative rules, transaction anatomy, script encoding, operations, state transitions, and every invalid condition.</p></a>
+      <a class="card" href="carriers.html"><h3>Carrier comparison</h3><p>OP_DROP against OP_RETURN, witness envelopes, and Stamps, including where OP_DROP is the worse choice.</p></a>
+      <a class="card" href="tool.html"><h3>Builder and decoder</h3><p>Paste a leaf script and watch the stack evolve, or build a leaf from a payload and see its size and fee.</p></a>
+      <a class="card" href="test-vectors.html"><h3>Test vectors</h3><p>Real leaf scripts, digests, commit addresses, and control blocks, with valid and invalid cases.</p></a>
+      <a class="card" href="guide.html"><h3>Guide</h3><p>What a deploy, mint, and transfer actually do, end to end, and which Bitcoin Universe surfaces support them.</p></a>
+      <a class="card" href="reference.html"><h3>Reference</h3><p>Terminology, indexer semantics, fee and size figures, standardness, limitations, and security considerations.</p></a>
+    </div>
+
+    <h2 id="scope">What this protocol does not claim</h2>
+    <div class="note warn">
+      <ul>
+        <li>OP_DROP does not change Bitcoin consensus. It uses opcodes that already exist.</li>
+        <li>OP_DROP is not an Ordinals inscription and not BRC-20. It shares the four-character ticker and first-valid-deploy ideas that BRC-20 popularised, and it says so in the <a href="specification.html#ledger">ledger rules</a>, but it produces no inscription number and no automatic interoperability with either system.</li>
+        <li>The leaf profile is built to survive the limits described in <a href="https://bips.dev/110/">BIP-110</a>, a published proposal that is marked complete as a document. That is a design choice about staying inside conservative bounds. It is not a claim that BIP-110 is active, nor that any node will relay or mine an OP_DROP transaction.</li>
+        <li>No claim is made that any third-party wallet, marketplace, miner, or indexer recognises OP_DROP.</li>
+      </ul>
+    </div>
+
+    <h2 id="products">Bitcoin Universe surfaces</h2>
+    <p>Support claimed here is limited to what is wired in the organisation's own code. See the <a href="guide.html#support">support matrix</a> for the exact per-surface detail and its caveats.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Verified surfaces</caption>
+        <thead><tr><th>Surface</th><th>Status</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Inscribe workspace</td><td><span class="badge ok">wired</span></td><td>Creates deploy, mint, and transfer events on the dedicated <a href="https://inscribe.bitcoinuniverse.io/op-drop">op-drop route</a>.</td></tr>
+          <tr><td>Core explorer</td><td><span class="badge ok">wired</span></td><td>Confirmed deployments, supply, holders, and event history.</td></tr>
+          <tr><td>Core portfolio</td><td><span class="badge ok">wired</span></td><td>Available, reserved, and total balances per address.</td></tr>
+          <tr><td>Core marketplace</td><td><span class="badge part">feature-gated</span></td><td>Trading is behind the <code>opDropTrading</code> gate and runs in external-execution mode. Selling is explicitly unsupported.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="security">Reporting a problem</h2>
+    <p>Report suspected vulnerabilities privately through <a href="https://github.com/bitcoinuniverseio/op-drop/security/advisories/new">GitHub private vulnerability reporting</a> on this repository. Do not open a public issue for a security problem, and do not include private keys, seed phrases, or wallet files in a report. The <a href="reference.html#security">security considerations</a> section lists the failure modes this protocol is already known to have.</p>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>index.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/index.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>
