@@ -4,7 +4,7 @@
   "name": "OP_DROP",
   "classification": "protocol",
   "repository": "bitcoinuniverseio/op-drop",
-  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op-drop",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op_drop/",
   "docsRoot": "docs",
   "sourceRef": "main",
   "lifecycle": "experimental",
