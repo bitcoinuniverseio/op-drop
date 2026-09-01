@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP reference: indexer semantics, fees, limits, security</title>
+<meta name="description" content="OP_DROP reference: terminology, confirmation and reorg behaviour, mempool handling, fee and size figures, standardness and relay considerations, limitations, security considerations, and an implementation checklist.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/reference.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP reference: indexer semantics, fees, limits, security">
+<meta property="og:description" content="What an OP_DROP indexer must do, what it costs, and what can go wrong.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/reference.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html" aria-current="page">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#terms">Terminology</a></li>
+        <li><a href="#indexing">Indexer semantics</a></li>
+        <li><a href="#mempool">Mempool</a></li>
+        <li><a href="#reorg">Reorg behaviour</a></li>
+        <li><a href="#fees">Fee and size</a></li>
+        <li><a href="#standardness">Standardness and relay</a></li>
+        <li><a href="#limits">Limitations</a></li>
+        <li><a href="#security">Security considerations</a></li>
+        <li><a href="#checklist">Implementation checklist</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Reference</p>
+    <h1>Reference</h1>
+    <p class="lede">The operational half of the protocol: what an indexer must do with the chain, what an OP_DROP transaction costs, and everything that can go wrong.</p>
+
+    <h2 id="terms">Terminology</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Terms, with the field names an API uses</caption>
+        <thead><tr><th>Term</th><th>API field</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Carrier marker</td><td>-</td><td>The fixed ASCII string <code>bip110-op-drop</code> at the head of every leaf. Never a user-facing name.</td></tr>
+          <tr><td>Protocol identifier</td><td><code>p</code></td><td>The string <code>op-drop</code> in every payload. The public name.</td></tr>
+          <tr><td>Leaf script</td><td><code>scriptHex</code></td><td>The tapscript revealed in the reveal witness.</td></tr>
+          <tr><td>Control block</td><td><code>controlBlockHex</code></td><td>The 33-byte Taproot proof that the leaf belonged to the spent output.</td></tr>
+          <tr><td>Anchor</td><td><code>anchor</code></td><td><code>{txid}:0</code>. Output 0 of the reveal. Its address owns the event; spending it settles a transfer.</td></tr>
+          <tr><td>Owner</td><td><code>owner</code></td><td>The address of output 0 of the reveal transaction.</td></tr>
+          <tr><td>Available</td><td><code>available</code></td><td>Confirmed units usable in a new transfer.</td></tr>
+          <tr><td>Reserved</td><td><code>transferable</code></td><td>Confirmed units held by an unsettled transfer. The interface word is "reserved"; the API field is <code>transferable</code>.</td></tr>
+          <tr><td>Total</td><td><code>total</code></td><td>Always <code>available + transferable</code>. Never stored separately.</td></tr>
+          <tr><td>Event id</td><td><code>eventId</code></td><td><code>{txid}:i{vin}:w1</code> for a reveal, <code>{txid}:s{vin}:{transferEventId}</code> for a settlement.</td></tr>
+          <tr><td>Minted supply</td><td><code>minted</code></td><td>The sum of all credited mint amounts for a ticker.</td></tr>
+          <tr><td>Remaining</td><td><code>remaining</code></td><td><code>max - minted</code>.</td></tr>
+          <tr><td>Holder</td><td><code>holders</code></td><td>An address whose available or reserved balance for a ticker is non-zero.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="indexing">Indexer semantics</h2>
+    <h3>Confirmation</h3>
+    <ul>
+      <li>The ledger reflects confirmed chain history only. An event affects state when its block reaches the deployment's configured confirmation depth.</li>
+      <li>Confirmation depth is per deployment and is reported by the indexer status endpoint. The software refuses to run below one confirmation on mainnet, and the reference configuration uses six.</li>
+      <li>Blocks are processed in batches, and the scan interval is configurable. Neither affects which events are valid, only how quickly they appear.</li>
+      <li>The scanner is a single writer. Read replicas serve the last fully committed state while the scanner works, so a partially processed block never becomes a visible balance.</li>
+      <li>Before its cursor is treated as synchronised, the reference scanner checks finalized block hashes against two independently operated Bitcoin nodes.</li>
+      <li>While the scanner is catching up, an interface may report that state is warming up. Existing confirmed records stay readable; new events should not be treated as admitted until synchronisation is restored.</li>
+    </ul>
+
+    <h3>Determinism</h3>
+    <ul>
+      <li>Events apply in the order defined by <a href="specification.html#ordering">OD-9.1</a>: block height, then transaction index, then operation index. Nothing depends on discovery order or wall-clock time.</li>
+      <li>Within one transaction, settlements (phase 0) apply before reveal leaves (phase 1). Units that arrive by settlement are therefore usable by a later operation in the same transaction.</li>
+      <li>An event id is unique per network. Re-observing one is a no-op.</li>
+      <li>An indexer must refuse to project state for a block whose reduced-data deployment status it cannot determine. Stopping is correct; guessing is not.</li>
+    </ul>
+
+    <h2 id="mempool">Mempool</h2>
+    <p>The ledger never includes mempool activity. There is no such thing as an unconfirmed OP_DROP balance.</p>
+    <p>The reference indexer can separately <em>track</em> a submitted transaction id so an interface can tell a user where their transaction is. That tracking reports one of three chain states and always carries the same warning.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Provisional tracking states</caption>
+        <thead><tr><th>State</th><th>Meaning</th><th>Effect on balances</th></tr></thead>
+        <tbody>
+          <tr><td><code>mempool</code></td><td>The transaction is known to the node but is in no block.</td><td>None</td></tr>
+          <tr><td><code>mined</code></td><td>It is in a block that has not reached the confirmation depth.</td><td>None</td></tr>
+          <tr><td><code>finalized</code></td><td>It is in a block at or beyond the confirmation depth.</td><td>Applied by the ledger</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The warning attached to every provisional record is exact: "Does not affect balances until finalized." Tracking records are retained for a bounded period and are not part of the ledger.</p>
+
+    <h2 id="reorg">Reorg behaviour</h2>
+    <p>A confirmed OP_DROP result can change if the block containing it is replaced. That is a property of Bitcoin, not a defect in the protocol.</p>
+    <ul>
+      <li>When a reorganisation is detected, the ledger is reconciled to the current chain: events in replaced blocks are removed and projections are rebuilt from the surviving immutable event rows.</li>
+      <li>Automatic recovery is deliberately bounded. The reference default allows a rollback of at most 24 blocks (configurable up to 144) and a rebuild of at most 100,000 surviving rows.</li>
+      <li>A divergence beyond those bounds is not handled automatically. It requires an authenticated operator replay, on the reasoning that anything deeper than a day of Bitcoin blocks deserves a human looking at the node first.</li>
+      <li>Rollback and rebuild happen inside one database transaction per block, so neither the ledger nor the scan cursor can advance halfway.</li>
+      <li>A reorg can change a settled transfer back to pending, or a valid mint back to nothing. Consumers should treat a recent event as provisional until it is deep.</li>
+    </ul>
+
+    <h2 id="fees">Fee and size</h2>
+    <h3>Where the bytes go</h3>
+    <p>A reveal transaction's weight is <code>base bytes &times; 4 + 2 + witness bytes</code>, and virtual size is that weight rounded up to the next whole vbyte. The leaf script and the control block sit in the witness, so they cost a quarter of what the same bytes would cost in an output.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Measured reveal sizes, one script-path input and one P2TR output</caption>
+        <thead><tr><th>Operation</th><th>Payload</th><th>Leaf script</th><th>Base</th><th>Witness</th><th>Weight</th><th>vsize</th></tr></thead>
+        <tbody>
+          <tr><td>deploy <code>drop</code></td><td class="num">73 B</td><td class="num">177 B</td><td class="num">94 B</td><td class="num">278 B</td><td class="num">656 WU</td><td class="num">164 vB</td></tr>
+          <tr><td>mint 1000</td><td class="num">54 B</td><td class="num">158 B</td><td class="num">94 B</td><td class="num">259 B</td><td class="num">637 WU</td><td class="num">160 vB</td></tr>
+          <tr><td>transfer 250</td><td class="num">57 B</td><td class="num">161 B</td><td class="num">94 B</td><td class="num">262 B</td><td class="num">640 WU</td><td class="num">160 vB</td></tr>
+          <tr><td>largest deploy</td><td class="num">101 B</td><td class="num">206 B</td><td class="num">94 B</td><td class="num">307 B</td><td class="num">685 WU</td><td class="num">172 vB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <caption>Reveal fee for a mint at 160 vB</caption>
+        <thead><tr><th>Fee rate</th><th>Reveal fee</th></tr></thead>
+        <tbody>
+          <tr><td class="num">1 sat/vB</td><td class="num">160 sat</td></tr>
+          <tr><td class="num">5 sat/vB</td><td class="num">800 sat</td></tr>
+          <tr><td class="num">15 sat/vB</td><td class="num">2,400 sat</td></tr>
+          <tr><td class="num">40 sat/vB</td><td class="num">6,400 sat</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>What the table leaves out</h3>
+    <ul>
+      <li><strong>The commit transaction.</strong> Funding the Taproot address is a separate transaction, roughly 155 vB for one input and two outputs. Budget for both.</li>
+      <li><strong>The anchor output's value.</strong> Output 0 must be above the dust threshold, which is 330 satoshis for a P2TR output. That value is not a fee; it stays spendable, and for a transfer it is spent again at settlement.</li>
+      <li><strong>The settlement transaction.</strong> A transfer needs a third transaction to spend the anchor.</li>
+      <li><strong>Batching.</strong> One leaf carries one event. Five mints are five inscriptions, so five commits and five reveals, not one transaction with five payloads.</li>
+      <li><strong>The media attachment.</strong> A 256 KiB image adds at least 1024 chunks, each with a push header and an <code>OP_DROP</code>, so roughly 262 KB of witness data, about 65,500 additional vbytes.</li>
+    </ul>
+
+    <h2 id="standardness">Standardness and relay</h2>
+    <p>An OP_DROP transaction is an ordinary Taproot script-path spend. No node has any concept of OP_DROP, which is both the reassuring part and the risky part.</p>
+    <ul>
+      <li><strong>No special policy applies.</strong> There is no data-carrier size switch for witness data, and no relay rule targets this construction. It is relayed on the same terms as any other tapscript spend.</li>
+      <li><strong>Standard transaction weight applies.</strong> A very large media attachment can push a reveal toward the standard transaction weight ceiling that most nodes enforce, at which point it will not relay even though it would be consensus valid inside a block.</li>
+      <li><strong>The dust threshold applies</strong> to output 0. Below it, the transaction is non-standard and will not relay.</li>
+      <li><strong>Relay is per node.</strong> Operators can and do run custom policies, including filters against transactions they judge to be carrying data. Nothing in OP_DROP prevents an operator from refusing it.</li>
+      <li><strong>Nothing here is consensus.</strong> Relay and mining are best-effort. A valid OP_DROP transaction can sit unconfirmed indefinitely if nobody mines it.</li>
+      <li><strong>The reduced-data construction profile</strong> in <a href="specification.html#profile">section 13</a> is stricter than any current policy. It is a design constraint chosen in advance, not a response to a rule that exists today.</li>
+    </ul>
+
+    <h2 id="limits">Limitations</h2>
+    <ol>
+      <li>One JSON object per leaf. No batching of events into a single reveal.</li>
+      <li>256 bytes per data push, which the token payload never approaches but which forces small chunks for the media attachment.</li>
+      <li>Tickers are exactly four lowercase alphanumeric characters. There is no longer form and no namespace.</li>
+      <li>No decimals. Every quantity is a whole number of units.</li>
+      <li>No self-mint mode. The carrier will encode <code>self_mint</code>, the ledger always rejects it.</li>
+      <li>Two transactions minimum, three for a completed transfer.</li>
+      <li>Output 0 is load bearing in both the reveal and the settlement, which makes the protocol sensitive to how a wallet orders outputs.</li>
+      <li>Only one transfer per transaction. Competing transfers are all rejected.</li>
+      <li>The payload is invisible until the reveal, so intent cannot be read from the mempool at commit time.</li>
+      <li>The payload lives in witness data, which a pruned node discards. Recovering an old payload requires an archival node or an indexer copy.</li>
+      <li>No third-party support. Nothing outside Bitcoin Universe indexes, displays, or trades OP_DROP.</li>
+      <li>Tickers are unreserved and first-come. A deploy can be front-run by anyone watching the mempool for your commit and reveal.</li>
+      <li>Strict serialization means a small encoder bug produces confirmed transactions that change nothing, and the fee is still spent.</li>
+      <li>Lifecycle is experimental. The rules may change, and a change would be published in the <a href="changelog.html">changelog</a> before it is deployed.</li>
+    </ol>
+
+    <h2 id="security">Security considerations</h2>
+
+    <h3>For anyone creating events</h3>
+    <ul>
+      <li><strong>The payload is permanent and public.</strong> Once the reveal confirms, the bytes are in the blockchain forever. Do not put anything private in a payload.</li>
+      <li><strong>The key in the leaf must be one you control.</strong> The leaf's <code>OP_CHECKSIG</code> is the only spend condition. Committing a leaf with someone else's key hands them the output.</li>
+      <li><strong>Output 0 discipline.</strong> If your wallet places change at output 0 of a settlement, the change address receives the transferred units. Verify output ordering before signing.</li>
+      <li><strong>Anchor control is settlement control.</strong> Whoever can spend the anchor decides the destination. If an anchor is held in escrow by someone else, they control where the units go.</li>
+      <li><strong>Deploys can be front-run.</strong> A commit is opaque, but a reveal is not. Between your reveal broadcasting and confirming, another party can attempt the same ticker with a higher fee.</li>
+      <li><strong>A failed event still costs the fee.</strong> Losing a mint race, breaking a serialization rule, or exceeding the supply all produce confirmed transactions that change nothing.</li>
+      <li><strong>Reusing one internal key</strong> across many commits links those events to each other on chain.</li>
+    </ul>
+
+    <h3>For anyone building an indexer or a decoder</h3>
+    <ul>
+      <li><strong>Never accept a leaf without the commitment proof.</strong> A witness item that decodes as an OP_DROP leaf proves nothing on its own. Check the control block against the spent output every time.</li>
+      <li><strong>Enforce the rebuild check.</strong> Comparing decoded fields is not enough. Recompile the leaf from those fields and compare the bytes (<a href="specification.html#script">OD-4.8</a>), or a non-minimal encoding will slip through and your index will diverge.</li>
+      <li><strong>Enforce the payload round trip.</strong> Re-serialize the parsed object and compare it with the pushed bytes (OD-6.12), or whitespace and key-order variants will be accepted.</li>
+      <li><strong>Resolve previous outputs from your own node.</strong> The previous output script is the whole basis of the commitment check. Taking it from a third-party API means trusting that API with the validity of your ledger.</li>
+      <li><strong>Use exact integers.</strong> Amounts reach 2<sup>128</sup> minus 1. Parsing them as floating point silently corrupts balances. Keep them as strings or big integers end to end.</li>
+      <li><strong>Apply events in the specified order, always.</strong> Any other order changes which deploy wins and which mint gets the last of the supply.</li>
+      <li><strong>Record invalid events.</strong> Silently dropping them makes divergence between implementations impossible to diagnose.</li>
+      <li><strong>Handle reorgs before you handle scale.</strong> An index that cannot roll back is wrong, not just slow.</li>
+      <li><strong>Do not derive OP_DROP state from an Ordinals or BRC-20 index.</strong> They are unrelated records.</li>
+    </ul>
+
+    <h3>For anyone consuming an OP_DROP API</h3>
+    <ul>
+      <li>An indexer is an interpretation, not the chain. For anything valuable, verify against block data yourself.</li>
+      <li>A "warming up" or partial response is not evidence that a token or balance does not exist.</li>
+      <li>Recent events can be reversed by a reorg. Depth matters.</li>
+      <li>Reserved units are already deducted from available. Do not add them twice.</li>
+      <li>Report suspected vulnerabilities privately through <a href="https://github.com/bitcoinuniverseio/op-drop/security/advisories/new">GitHub private vulnerability reporting</a>, never in a public issue.</li>
+    </ul>
+
+    <h2 id="checklist">Implementation checklist</h2>
+    <p>Work down this list. Each item is testable against the <a href="test-vectors.html">test vectors</a>.</p>
+
+    <h3>Encoder</h3>
+    <ul>
+      <li>Serialize the payload compactly, in the required key order, with string values only.</li>
+      <li>Validate ranges before encoding: four-character ticker, positive integers with no leading zero, <code>lim</code> not greater than <code>max</code>, values inside the 64-bit and 128-bit bounds.</li>
+      <li>Compute SHA-256 of the payload bytes and place it in element 5.</li>
+      <li>Use minimal push encoding for every element.</li>
+      <li>Reject any payload above 256 bytes rather than chunking it.</li>
+      <li>Verify by decoding your own output and comparing the bytes.</li>
+      <li>Build the commit output as a single-leaf Taproot tree at version <code>0xc0</code>.</li>
+      <li>Fund the commit output above the dust threshold and budget for the reveal.</li>
+    </ul>
+
+    <h3>Decoder</h3>
+    <ul>
+      <li>Require exactly three witness items, a 64 or 65-byte signature, and a 33-byte control block whose first byte is not <code>0x50</code>.</li>
+      <li>Require a P2TR previous output.</li>
+      <li>Verify the tapleaf version, the Merkle root, the key parity, and the output key against the previous output.</li>
+      <li>Parse the ten script elements and check the marker, the content type, both 32-byte fields, and the four <code>OP_DROP</code> positions plus <code>OP_CHECKSIG</code>.</li>
+      <li>Recompile and compare byte for byte.</li>
+      <li>Verify the digest against the payload.</li>
+      <li>Validate the payload and re-serialize to confirm compactness.</li>
+      <li>Reproduce every reason code on the test vectors page.</li>
+    </ul>
+
+    <h3>Indexer</h3>
+    <ul>
+      <li>Scan confirmed blocks with a reorg-safe cursor and your own full node.</li>
+      <li>Resolve previous outputs from that node, never from a third party.</li>
+      <li>Derive the owner from output 0 of the reveal, and treat output 0 of the settling transaction as the only possible destination.</li>
+      <li>Apply the ordering rule exactly, with settlements before reveals inside a transaction.</li>
+      <li>Implement first valid deploy wins, the mint limit, the partial final mint, and supply exhaustion.</li>
+      <li>Implement two-stage transfers, including the return path when a destination cannot be identified.</li>
+      <li>Reject a transaction carrying more than one valid transfer leaf.</li>
+      <li>Record invalid events with a reason and change no balances.</li>
+      <li>Roll back and rebuild on reorg, inside one transaction per block, with an explicit bound on automatic recovery.</li>
+      <li>Refuse to project state for a block whose construction-rule status is indeterminate.</li>
+      <li>Expose available, reserved, and total separately, as decimal strings.</li>
+      <li>Reproduce every ledger and transfer sequence on the test vectors page.</li>
+    </ul>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>reference.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/reference.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

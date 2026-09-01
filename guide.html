@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OP_DROP guide: deploy, mint, transfer, end to end</title>
+<meta name="description" content="A plain-language walkthrough of OP_DROP: what deploy, mint, and transfer do, two fully worked transactions, how to read a result, and which Bitcoin Universe surfaces support the protocol.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/guide.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OP_DROP guide: deploy, mint, transfer, end to end">
+<meta property="og:description" content="What each operation does, worked transactions, and a support matrix limited to what is verifiable.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/guide.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html">Carrier comparison</a></li>
+        <li><a href="guide.html" aria-current="page">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#three">Three operations</a></li>
+        <li><a href="#journey">The path an action takes</a></li>
+        <li><a href="#mint-example">Worked example: a mint</a></li>
+        <li><a href="#transfer-example">Worked example: a transfer</a></li>
+        <li><a href="#reading">Reading a result</a></li>
+        <li><a href="#drop">The $DROP token</a></li>
+        <li><a href="#support">Support matrix</a></li>
+        <li><a href="#safety">Staying in control</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Guide</p>
+    <h1>Using OP_DROP</h1>
+    <p class="lede">You do not need to read the specification to use OP_DROP, but you do need to understand one idea: nothing counts until a transaction confirms and the rules accept it. A wallet preview is a proposal, not a balance.</p>
+
+    <h2 id="three">Three operations</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>What each operation does</caption>
+        <thead><tr><th>Operation</th><th>In plain language</th><th>Fields you choose</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Deploy</strong></td><td>Define a new token: pick a four-character ticker, a maximum supply, and how much one mint may request. The first valid deploy for a ticker wins, permanently.</td><td><code>tick</code>, <code>max</code>, <code>lim</code></td></tr>
+          <tr><td><strong>Mint</strong></td><td>Ask for units of a token that already exists, under the rules its deploy set.</td><td><code>tick</code>, <code>amt</code></td></tr>
+          <tr><td><strong>Transfer</strong></td><td>Move units you already hold. This happens in two confirmed steps, not one.</td><td><code>tick</code>, <code>amt</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Tickers are not reserved. Anyone can attempt a deploy for any four-character ticker at any time, and only chain order decides who gets it. Check the explorer before you plan a launch around a name.</p>
+
+    <h2 id="journey">The path an action takes</h2>
+    <figure class="figscroll">
+      <svg viewBox="0 0 660 190" role="img" aria-labelledby="fig-journey-t fig-journey-d">
+        <title id="fig-journey-t">The path from choosing an action to a confirmed result</title>
+        <desc id="fig-journey-d">Five steps in a row. First, choose deploy, mint, or transfer. Second, review the exact JSON that will be carried. Third, sign the commit and reveal transactions. Fourth, wait for confirmation to the deployment's configured depth. Fifth, check the explorer or portfolio for the confirmed result. A note underneath says that between steps three and five the action is pending and is not a balance.</desc>
+        <g>
+          <rect x="8" y="28" width="112" height="54" class="d-box"></rect>
+          <text class="d-t" x="64" y="52" text-anchor="middle">Choose the</text>
+          <text class="d-t" x="64" y="68" text-anchor="middle">operation</text>
+          <path d="M120 55 H144" class="d-lead"></path><path d="M144 51 v8 l8 -4 z" class="d-arrow"></path>
+
+          <rect x="152" y="28" width="112" height="54" class="d-box-a"></rect>
+          <text class="d-ta" x="208" y="52" text-anchor="middle">Read the exact</text>
+          <text class="d-ta" x="208" y="68" text-anchor="middle">JSON</text>
+          <path d="M264 55 H288" class="d-lead"></path><path d="M288 51 v8 l8 -4 z" class="d-arrow"></path>
+
+          <rect x="296" y="28" width="112" height="54" class="d-box"></rect>
+          <text class="d-t" x="352" y="52" text-anchor="middle">Sign commit</text>
+          <text class="d-t" x="352" y="68" text-anchor="middle">and reveal</text>
+          <path d="M408 55 H432" class="d-lead"></path><path d="M432 51 v8 l8 -4 z" class="d-arrow"></path>
+
+          <rect x="440" y="28" width="98" height="54" class="d-box"></rect>
+          <text class="d-t" x="489" y="52" text-anchor="middle">Wait for</text>
+          <text class="d-t" x="489" y="68" text-anchor="middle">confirmation</text>
+          <path d="M538 55 H562" class="d-lead"></path><path d="M562 51 v8 l8 -4 z" class="d-arrow"></path>
+
+          <rect x="570" y="28" width="82" height="54" class="d-box"></rect>
+          <text class="d-t" x="611" y="52" text-anchor="middle">Check the</text>
+          <text class="d-t" x="611" y="68" text-anchor="middle">result</text>
+        </g>
+        <line x1="8" y1="112" x2="652" y2="112" class="d-lead" stroke-dasharray="3 3"></line>
+        <text class="d-tmute" x="8" y="134">Between signing and the confirmed result the action is pending. Pending is not a balance.</text>
+        <text class="d-tmute" x="8" y="154">Step 2 is the only step where a mistake is still free. Read the JSON there.</text>
+        <text class="d-tmute" x="8" y="174">A confirmed Bitcoin transaction cannot be taken back.</text>
+      </svg>
+      <figcaption>Every OP_DROP action follows this path, whichever tool creates it.</figcaption>
+    </figure>
+
+    <h2 id="mint-example">Worked example: a mint, end to end</h2>
+    <p>Minting 1000 <code>drop</code>. Every value here is real, and comes from vector V2 on the <a href="test-vectors.html#valid">test vectors</a> page.</p>
+
+    <h3>Step 1: the event</h3>
+    <pre><code>{"p":"op-drop","op":"mint","tick":"drop","amt":"1000"}</code></pre>
+    <p>54 bytes, exactly as written. No spaces, no reordering, values as strings.</p>
+
+    <h3>Step 2: the leaf</h3>
+    <p>The event is hashed, and the digest and the event are both pushed into a leaf script along with the marker, the content type, and your public key. That script is 158 bytes:</p>
+    <pre><code>PUSH "bip110-op-drop"   OP_DROP
+PUSH "application/json" OP_DROP
+PUSH 3c0153…12e1        OP_DROP
+PUSH {"p":"op-drop",…}  OP_DROP
+PUSH 8836f3…bf3b        OP_CHECKSIG</code></pre>
+
+    <h3>Step 3: the commit transaction</h3>
+    <p>The leaf is committed into a Taproot address. For this leaf and this key that address is:</p>
+    <pre><code>bc1pjx22xhtzlyxn2fef89l9t2z3qrsfypyuufau6uszequgcc64n5kqtlwnap</code></pre>
+    <p>You pay that address. On chain this looks like any other Taproot payment. Nobody can tell what it commits to.</p>
+
+    <h3>Step 4: the reveal transaction</h3>
+    <p>You spend that output along the script path. The witness carries exactly three items: your signature, the leaf script, and the 33-byte control block <code>c18836f3…bf3b</code>. Output 0 of this transaction is the anchor, and its address is credited with the minted units. The reveal is about 160 vB, so at 5 sat/vB it costs roughly 800 sat plus whatever the commit cost.</p>
+
+    <h3>Step 5: the result</h3>
+    <p>Once the reveal reaches the deployment's confirmation depth, an indexer applies the rules. If <code>drop</code> is deployed and supply remains, output 0's address gains 1000 available units and the event id <code>{revealTxid}:i0:w1</code> appears in the event ledger with status <code>valid</code>. If supply had run out, the same transaction would appear with status <code>invalid</code> and reason <code>supply_exhausted</code>, and you would have paid the fee for nothing.</p>
+    <div class="note warn">
+      <p>That last sentence is not a bug. Bitcoin has no way to tell you in advance that a mint will lose a race. Check remaining supply immediately before you sign, and expect the last mints of a popular token to fail.</p>
+    </div>
+
+    <h2 id="transfer-example">Worked example: a transfer</h2>
+    <p>A transfer is two confirmed steps, and the units are visible in a third state in between. This is the part of OP_DROP that surprises people.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Moving 250 units from A to B</caption>
+        <thead><tr><th>Step</th><th>What you do</th><th>What the ledger shows</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Create a transfer event at address A for <code>amt</code> 250. Commit and reveal.</td><td>Nothing. Pending.</td></tr>
+          <tr><td>2</td><td>The reveal confirms.</td><td>A: 750 available, 250 reserved. Event status <code>transfer_pending</code>. B has nothing.</td></tr>
+          <tr><td>3</td><td>Spend the anchor, output 0 of the reveal, in a new transaction that pays B at its output 0.</td><td>Still 250 reserved until this confirms.</td></tr>
+          <tr><td>4</td><td>That transaction confirms.</td><td>A: 750 available, 0 reserved. B: 250 available. A settlement event appears with status <code>settled</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Three details decide whether step 4 works:</p>
+    <ul>
+      <li><strong>Output 0 is the destination.</strong> Not output 1, not the change output, not the address that signed. If your wallet puts change at output 0, the change address receives the units.</li>
+      <li><strong>If output 0 has no address</strong>, an <code>OP_RETURN</code> for example, the transfer is invalid and the 250 units return to A. Nothing is destroyed.</li>
+      <li><strong>Only the first spend counts.</strong> Once the anchor is spent, the transfer is finished either way.</li>
+    </ul>
+    <p>A transfer also cannot share a transaction with another transfer. Two valid transfer leaves in one transaction would both claim the same anchor, so both are rejected with <code>ambiguous_transfer_anchor</code>. A transfer alongside a mint is fine.</p>
+
+    <h2 id="reading">Reading a result</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>What you will see and what it means</caption>
+        <thead><tr><th>You see</th><th>It means</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td>Pending order</td><td>A transaction step has not confirmed. It is not a balance.</td><td>Wait. Check the transaction on any Bitcoin explorer.</td></tr>
+          <tr><td>Indexer warming up</td><td>The confirmed view is still catching up to the chain tip.</td><td>Recheck later before relying on totals.</td></tr>
+          <tr><td>Status <code>valid</code></td><td>A deploy or mint passed every rule and changed state.</td><td>Nothing.</td></tr>
+          <tr><td>Status <code>transfer_pending</code></td><td>Units are reserved. The anchor has not been spent yet.</td><td>Spend the anchor to complete the transfer.</td></tr>
+          <tr><td>Status <code>settled</code></td><td>A transfer credited its destination.</td><td>Nothing.</td></tr>
+          <tr><td>Status <code>invalid</code> with a reason</td><td>The transaction was seen but a rule failed. No balance changed.</td><td>Read the reason. The full list is in the <a href="specification.html#invalid">specification</a>.</td></tr>
+          <tr><td>No token found</td><td>No valid confirmed deploy for that ticker on this network.</td><td>It does not mean a pending deploy will fail, and it does not mean the ticker is free.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="drop">The $DROP token</h2>
+    <p><code>$DROP</code> is a display label. The wire ticker is <code>drop</code>, four lowercase characters like every OP_DROP ticker.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>$DROP terms</caption>
+        <tbody>
+          <tr><th>Wire ticker</th><td class="num">drop</td></tr>
+          <tr><th>Maximum supply</th><td class="num">21,000,000 whole units</td></tr>
+          <tr><th>Limit per mint event</th><td class="num">1,000</td></tr>
+          <tr><th>Full-limit mint count</th><td class="num">21,000</td></tr>
+          <tr><th>Decimal places</th><td class="num">none</td></tr>
+          <tr><th>Deploy payload</th><td class="out">{"p":"op-drop","op":"deploy","tick":"drop","max":"21000000","lim":"1000"}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>21,000 is the number of full-limit mints needed to exhaust the supply. Smaller mints are valid, so the actual number of mint events can differ. These are protocol terms only. They are not a price, an availability promise, or a claim that the deployment exists on any particular network: a deployment exists only after its exact deploy event confirms and is accepted.</p>
+
+    <h2 id="support">Support matrix</h2>
+    <p>This table lists only what can be verified in Bitcoin Universe's own source. Nothing outside this organisation reads OP_DROP, and no claim is made about any third-party wallet, marketplace, miner, or indexer.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Verified Bitcoin Universe support</caption>
+        <thead><tr><th>Surface</th><th>Actions</th><th>Status</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Inscribe workspace</td>
+            <td>deploy, mint, transfer</td>
+            <td><span class="badge ok">wired</span></td>
+            <td>A dedicated <a href="https://inscribe.bitcoinuniverse.io/op-drop">op-drop route</a> that builds the strict construction. Ordinary BRC-20 routes cannot produce an OP_DROP payload. Mint batches are capped at five independent inscriptions, which does not change the per-event limit.</td>
+          </tr>
+          <tr>
+            <td>Core explorer</td>
+            <td>view, discover, view collection, view activity, view transaction</td>
+            <td><span class="badge ok">wired</span></td>
+            <td>Deployments, supply, holders, and confirmed event history, read only.</td>
+          </tr>
+          <tr>
+            <td>Core portfolio</td>
+            <td>view</td>
+            <td><span class="badge ok">wired</span></td>
+            <td>Available, reserved, and total balances per address, in a card separate from Ordinals and BRC-20.</td>
+          </tr>
+          <tr>
+            <td>Core wallet</td>
+            <td>view, send, receive</td>
+            <td><span class="badge ok">declared</span></td>
+            <td>Declared in the ecosystem registry as a wallet surface for the protocol.</td>
+          </tr>
+          <tr>
+            <td>Core marketplace</td>
+            <td>list, update listing, unlist, buy, make offer, accept offer, cancel offer, settle, reconcile</td>
+            <td><span class="badge part">feature-gated</span></td>
+            <td>Behind the <code>opDropTrading</code> feature gate, in external-execution mode against a configured OP_DROP marketplace authority. Settlement is recorded only when a finalized-block scanner verifies the exact intent transaction and the custody transition.</td>
+          </tr>
+          <tr>
+            <td>Core marketplace: sell</td>
+            <td>sell</td>
+            <td><span class="badge no">unsupported</span></td>
+            <td>Recorded in the registry as unsupported: OP_DROP has no executable offer workflow on that surface.</td>
+          </tr>
+          <tr>
+            <td>Third-party wallets, explorers, marketplaces</td>
+            <td>any</td>
+            <td><span class="badge no">none</span></td>
+            <td>Not currently supported. No external tool recognises an OP_DROP event.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <p>"Wired" means the surface exists in the organisation's source. "Declared" means the ecosystem registry lists the capability. "Feature-gated" means the code exists but is off unless the gate is enabled for a deployment. None of these are a promise that a given deployment has it switched on today.</p>
+    </div>
+
+    <h2 id="safety">Staying in control</h2>
+    <ul>
+      <li>Never enter a seed phrase or private key into any page, including this one. No OP_DROP tool needs one.</li>
+      <li>Read the exact JSON before approving. It is the only place where a mistake is still free.</li>
+      <li>Check the network, the destination, the amount, and the total fee in a wallet you trust.</li>
+      <li>Treat a signature and a pending transaction as neither ownership nor a balance.</li>
+      <li>Confirmed Bitcoin transactions are effectively irreversible.</li>
+      <li>Do not read an Ordinals or BRC-20 balance as an OP_DROP balance. They are unrelated records that happen to share ticker conventions.</li>
+      <li>For a transfer, verify which output your wallet will place first. Output 0 is the destination.</li>
+    </ul>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>guide.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/guide.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>
