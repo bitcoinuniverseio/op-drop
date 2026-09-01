@@ -228,14 +228,14 @@ PUSH 8836f3…bf3b        OP_CHECKSIG</code></pre>
           <tr>
             <td>Core explorer</td>
             <td>view, discover, view collection, view activity, view transaction</td>
-            <td><span class="badge ok">wired</span></td>
-            <td>Deployments, supply, holders, and confirmed event history, read only.</td>
+            <td><span class="badge part">feature-gated</span></td>
+            <td>Deployments, supply, holders, and confirmed event history, read only. Behind the <code>opDropIndex</code> gate, which defaults to off: the protocol is staged independently so index reads, portfolio balances, and the trade desk can be enabled one at a time.</td>
           </tr>
           <tr>
             <td>Core portfolio</td>
             <td>view</td>
             <td><span class="badge ok">wired</span></td>
-            <td>Available, reserved, and total balances per address, in a card separate from Ordinals and BRC-20.</td>
+            <td>Available, reserved, and total balances per address, in a card separate from Ordinals and BRC-20. This surface is not gated.</td>
           </tr>
           <tr>
             <td>Core wallet</td>
@@ -247,7 +247,7 @@ PUSH 8836f3…bf3b        OP_CHECKSIG</code></pre>
             <td>Core marketplace</td>
             <td>list, update listing, unlist, buy, make offer, accept offer, cancel offer, settle, reconcile</td>
             <td><span class="badge part">feature-gated</span></td>
-            <td>Behind the <code>opDropTrading</code> feature gate, in external-execution mode against a configured OP_DROP marketplace authority. Settlement is recorded only when a finalized-block scanner verifies the exact intent transaction and the custody transition.</td>
+            <td>Behind the <code>opDropTrading</code> gate, which also defaults to off, in external-execution mode against a configured OP_DROP marketplace authority. Settlement is recorded only when a finalized-block scanner verifies the exact intent transaction and the custody transition.</td>
           </tr>
           <tr>
             <td>Core marketplace: sell</td>
@@ -265,7 +265,7 @@ PUSH 8836f3…bf3b        OP_CHECKSIG</code></pre>
       </table>
     </div>
     <div class="note">
-      <p>"Wired" means the surface exists in the organisation's source. "Declared" means the ecosystem registry lists the capability. "Feature-gated" means the code exists but is off unless the gate is enabled for a deployment. None of these are a promise that a given deployment has it switched on today.</p>
+      <p>"Wired" means the surface exists in the organisation's source and is not behind a gate. "Declared" means the ecosystem registry lists the capability. "Feature-gated" means the code exists but the gate defaults to off, so the surface is absent unless a deployment explicitly enables it. None of these are a promise that a given deployment has it switched on today, and the safest assumption for a gated surface is that it is off.</p>
     </div>
 
     <h2 id="safety">Staying in control</h2>
