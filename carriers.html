@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carrier comparison: OP_DROP, OP_RETURN, witness envelopes, Stamps</title>
+<meta name="description" content="An honest comparison of four Bitcoin data carriers: OP_DROP, OP_RETURN, Ordinals-style witness envelopes, and Bitcoin Stamps unprunable outputs, including where OP_DROP is the worse choice.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/op-drop/carriers.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Carrier comparison: OP_DROP, OP_RETURN, witness envelopes, Stamps">
+<meta property="og:description" content="Where the bytes live, what they cost, what gets pruned, and where OP_DROP loses.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/op-drop/carriers.html">
+<meta property="og:image" content="https://bitcoinuniverseio.github.io/op-drop/assets/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/apparatus.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="./">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true" focusable="false">
+        <rect x="1.5" y="1.5" width="19" height="19" fill="none" stroke="var(--rule-strong)"></rect>
+        <path d="M11 4.5v8.5" stroke="var(--accent-line)" stroke-width="2" fill="none"></path>
+        <path d="M6.5 12.5 11 17.5l4.5-5" fill="none" stroke="var(--accent-line)" stroke-width="2"></path>
+      </svg>
+      OP_DROP<span class="brand-sub">Protocol</span>
+    </a>
+    <div class="masthead-tools">
+      <div class="searchbox jsonly">
+        <label class="skip" for="search-input">Search this site</label>
+        <input type="search" id="search-input" data-base="" placeholder="Search  /" autocomplete="off">
+        <div id="search-results" role="region" aria-live="polite" aria-label="Search results" hidden></div>
+      </div>
+      <button type="button" class="tbtn jsonly" id="theme-toggle" aria-pressed="false">Theme: <span class="theme-label">Light</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <span class="label">Documentation</span>
+    <nav aria-label="Site sections">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="specification.html">Specification</a></li>
+        <li><a href="carriers.html" aria-current="page">Carrier comparison</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="test-vectors.html">Test vectors</a></li>
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="tool.html">Builder and decoder</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+    <span class="label">On this page</span>
+    <nav aria-label="Sections of this page">
+      <ul>
+        <li><a href="#where">Where the bytes live</a></li>
+        <li><a href="#matrix">Property matrix</a></li>
+        <li><a href="#cost">Cost worked out</a></li>
+        <li><a href="#opreturn">Against OP_RETURN</a></li>
+        <li><a href="#envelope">Against witness envelopes</a></li>
+        <li><a href="#stamps">Against Stamps</a></li>
+        <li><a href="#worse">Where OP_DROP is worse</a></li>
+        <li><a href="#choose">Choosing</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <p class="kicker label">Carrier comparison</p>
+    <h1>Four ways to put data on Bitcoin</h1>
+    <p class="lede">OP_DROP is one of a small number of protocols Bitcoin Universe designed rather than adopted, so it has to earn its place next to the carriers that already work. This page states the trade honestly, including the cases where you should not use it.</p>
+
+    <div class="note">
+      <p><strong>Attribution.</strong> OP_RETURN is a Bitcoin Core feature, not a protocol of this organisation. Witness envelopes are the construction popularised by the Ordinals project. Bitcoin Stamps originated outside Bitcoin Universe. OP_DROP is a Bitcoin Universe design. Relay and standardness behaviour described below is node policy, which varies by implementation, version, and operator configuration, and is not consensus.</p>
+    </div>
+
+    <h2 id="where">Where the bytes live</h2>
+    <p>Every carrier answers the same question differently: which part of the transaction holds the data, and what does that part cost.</p>
+
+    <figure class="figscroll figwide">
+      <svg viewBox="0 0 720 330" role="img" aria-labelledby="fig-where-t fig-where-d">
+        <title id="fig-where-t">Where each carrier stores its payload inside a Bitcoin transaction</title>
+        <desc id="fig-where-d">Four transaction diagrams side by side. OP_RETURN places the payload in an output script, weighted at four weight units per byte and never entering the UTXO set. A witness envelope places the payload in witness data at one weight unit per byte, inside a branch that is skipped. OP_DROP places the payload in witness data at one weight unit per byte, inside code that runs and then discards it. Stamps places the payload in spendable-looking outputs that stay in the UTXO set permanently.</desc>
+
+        <g>
+          <text class="d-cap" x="14" y="18">OP_RETURN</text>
+          <rect x="14" y="28" width="150" height="42" class="d-box"></rect>
+          <text class="d-tmute" x="24" y="54">inputs + witness</text>
+          <rect x="14" y="76" width="150" height="52" class="d-box-a"></rect>
+          <text class="d-ta" x="24" y="98">output script</text>
+          <text class="d-tmute" x="24" y="114">payload here</text>
+          <rect x="14" y="134" width="150" height="34" class="d-box"></rect>
+          <text class="d-tmute" x="24" y="155">change output</text>
+          <text class="d-tmute" x="14" y="196">4 weight units</text>
+          <text class="d-tmute" x="14" y="211">per byte</text>
+          <text class="d-tmute" x="14" y="234">Unspendable,</text>
+          <text class="d-tmute" x="14" y="249">so no UTXO entry.</text>
+          <text class="d-tmute" x="14" y="272">One transaction.</text>
+        </g>
+
+        <g>
+          <text class="d-cap" x="192" y="18">Witness envelope</text>
+          <rect x="192" y="28" width="150" height="70" class="d-box-a"></rect>
+          <text class="d-ta" x="202" y="50">witness</text>
+          <text class="d-tmute" x="202" y="66">payload inside</text>
+          <text class="d-tmute" x="202" y="80">OP_IF, skipped</text>
+          <rect x="192" y="104" width="150" height="34" class="d-box"></rect>
+          <text class="d-tmute" x="202" y="125">P2TR output</text>
+          <rect x="192" y="144" width="150" height="24" class="d-box-mute"></rect>
+          <text class="d-tmute" x="202" y="161">commit tx before</text>
+          <text class="d-tmute" x="192" y="196">1 weight unit</text>
+          <text class="d-tmute" x="192" y="211">per byte</text>
+          <text class="d-tmute" x="192" y="234">Not in UTXO set,</text>
+          <text class="d-tmute" x="192" y="249">discarded if pruned.</text>
+          <text class="d-tmute" x="192" y="272">Two transactions.</text>
+        </g>
+
+        <g>
+          <text class="d-cap" x="370" y="18">OP_DROP</text>
+          <rect x="370" y="28" width="150" height="70" class="d-box-a"></rect>
+          <text class="d-ta" x="380" y="50">witness</text>
+          <text class="d-tmute" x="380" y="66">payload pushed,</text>
+          <text class="d-tmute" x="380" y="80">then dropped</text>
+          <rect x="370" y="104" width="150" height="34" class="d-box"></rect>
+          <text class="d-tmute" x="380" y="125">P2TR anchor out</text>
+          <rect x="370" y="144" width="150" height="24" class="d-box-mute"></rect>
+          <text class="d-tmute" x="380" y="161">commit tx before</text>
+          <text class="d-tmute" x="370" y="196">1 weight unit</text>
+          <text class="d-tmute" x="370" y="211">per byte</text>
+          <text class="d-tmute" x="370" y="234">Anchor output does</text>
+          <text class="d-tmute" x="370" y="249">enter the UTXO set.</text>
+          <text class="d-tmute" x="370" y="272">Two transactions.</text>
+        </g>
+
+        <g>
+          <text class="d-cap" x="548" y="18">Stamps</text>
+          <rect x="548" y="28" width="150" height="42" class="d-box"></rect>
+          <text class="d-tmute" x="558" y="54">inputs + witness</text>
+          <rect x="548" y="76" width="150" height="52" class="d-box-a"></rect>
+          <text class="d-ta" x="558" y="98">many outputs</text>
+          <text class="d-tmute" x="558" y="114">payload here</text>
+          <rect x="548" y="134" width="150" height="34" class="d-box"></rect>
+          <text class="d-tmute" x="558" y="155">change output</text>
+          <text class="d-tmute" x="548" y="196">4 weight units</text>
+          <text class="d-tmute" x="548" y="211">per byte</text>
+          <text class="d-tmute" x="548" y="234">Stays in the UTXO</text>
+          <text class="d-tmute" x="548" y="249">set by design.</text>
+          <text class="d-tmute" x="548" y="272">One transaction.</text>
+        </g>
+
+        <line x1="14" y1="296" x2="700" y2="296" class="d-lead"></line>
+        <text class="d-tmute" x="14" y="316">Witness bytes are cheaper because segregated witness counts them at one weight unit instead of four.</text>
+      </svg>
+      <figcaption>The four carriers put data in three different places. That single choice determines cost, prunability, and how node relay policy treats the transaction.</figcaption>
+    </figure>
+
+    <h2 id="matrix">Property matrix</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Carrier properties</caption>
+        <thead>
+          <tr><th>Property</th><th>OP_RETURN</th><th>Witness envelope</th><th>OP_DROP</th><th>Stamps</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th>Data location</th>
+            <td>Output script</td><td>Tapscript leaf, unexecuted branch</td><td>Tapscript leaf, executed pushes</td><td>Output scripts (bare multisig)</td>
+          </tr>
+          <tr>
+            <th>Weight per data byte</th>
+            <td class="num">4</td><td class="num">1</td><td class="num">1</td><td class="num">4</td>
+          </tr>
+          <tr>
+            <th>Transactions needed</th>
+            <td class="num">1</td><td class="num">2 (commit, reveal)</td><td class="num">2 (commit, reveal)</td><td class="num">1</td>
+          </tr>
+          <tr>
+            <th>Enters the UTXO set</th>
+            <td><span class="badge ok">No</span></td>
+            <td><span class="badge ok">No</span> for the data; the reveal output does</td>
+            <td><span class="badge part">Anchor output does</span></td>
+            <td><span class="badge no">Yes, permanently</span></td>
+          </tr>
+          <tr>
+            <th>Survives node pruning</th>
+            <td><span class="badge no">No</span></td>
+            <td><span class="badge no">No</span></td>
+            <td><span class="badge no">No</span></td>
+            <td><span class="badge ok">Yes</span></td>
+          </tr>
+          <tr>
+            <th>Practical payload size</th>
+            <td>Historically 80 bytes by default relay policy</td>
+            <td>Effectively block-sized, chunked into 520-byte pushes</td>
+            <td>256 bytes per push; one JSON object per leaf</td>
+            <td>Limited by fee tolerance and output count</td>
+          </tr>
+          <tr>
+            <th>Data is executed</th>
+            <td><span class="badge no">Never</span>, the output is provably unspendable</td>
+            <td><span class="badge no">Never</span>, the branch is skipped</td>
+            <td><span class="badge ok">Yes</span>, pushed then dropped</td>
+            <td><span class="badge no">Never</span> in practice</td>
+          </tr>
+          <tr>
+            <th>Conditional opcodes used</th>
+            <td>None</td><td><code>OP_IF</code> / <code>OP_ENDIF</code></td><td>None</td><td>None</td>
+          </tr>
+          <tr>
+            <th>Data readable without the spend</th>
+            <td><span class="badge ok">Yes</span>, visible the moment it confirms</td>
+            <td><span class="badge no">No</span>, only after the reveal</td>
+            <td><span class="badge no">No</span>, only after the reveal</td>
+            <td><span class="badge ok">Yes</span></td>
+          </tr>
+          <tr>
+            <th>Ecosystem tooling</th>
+            <td><span class="badge ok">Universal</span></td>
+            <td><span class="badge ok">Broad</span></td>
+            <td><span class="badge no">Bitcoin Universe only</span></td>
+            <td><span class="badge part">Stamps ecosystem</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="cost">Cost, worked out</h2>
+    <p>Take a 54-byte payload, the exact size of the OP_DROP mint event <code>{"p":"op-drop","op":"mint","tick":"drop","amt":"1000"}</code>, and price it four ways. Assumptions are stated so you can check the arithmetic: one Taproot key-path input, Taproot outputs, one change output where the carrier needs one, no consolidation, and no wallet-specific padding.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Approximate cost for the same 54-byte payload</caption>
+        <thead><tr><th>Carrier</th><th>Transactions</th><th>Total vsize</th><th>Relative</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>OP_RETURN</td><td class="num">1</td><td class="num">~165 vB</td><td class="num">1.0x</td>
+            <td>Cheapest for a small payload. The data output carries no value and creates no UTXO.</td>
+          </tr>
+          <tr>
+            <td>OP_DROP</td><td class="num">2</td><td class="num">~315 vB</td><td class="num">~1.9x</td>
+            <td>Reveal alone is 160 vB (637 weight units: 94 base bytes, 259 witness bytes). The commit transaction adds roughly 155 vB.</td>
+          </tr>
+          <tr>
+            <td>Witness envelope</td><td class="num">2</td><td class="num">~310 vB</td><td class="num">~1.9x</td>
+            <td>Nearly identical to OP_DROP at this size. The envelope wins as payloads grow, because it chunks at 520 bytes per push instead of 256.</td>
+          </tr>
+          <tr>
+            <td>Stamps</td><td class="num">1</td><td class="num">~230 vB</td><td class="num">~1.4x</td>
+            <td>Plus a permanent cost every node pays forever: the outputs stay in the UTXO set.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The OP_DROP figures come from the exact leaf scripts on the <a href="test-vectors.html">test vectors</a> page and are reproduced by the <a href="tool.html">builder</a>. The other three are estimates for comparison, not authoritative figures for those protocols.</p>
+
+    <h2 id="opreturn">Against OP_RETURN</h2>
+    <p>OP_RETURN is the carrier Bitcoin Core built on purpose. An output whose script begins with <code>OP_RETURN</code> is provably unspendable, so nodes drop it from the UTXO set immediately. Nothing about OP_DROP beats that property.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>OP_RETURN against OP_DROP</caption>
+        <thead><tr><th>Dimension</th><th>OP_RETURN</th><th>OP_DROP</th></tr></thead>
+        <tbody>
+          <tr><td>Size limit</td><td>A relay-policy limit, historically 80 bytes of data by default in Bitcoin Core, with one such output per transaction. Bitcoin Core relaxed those defaults in its 2025 release line, and other implementations and older nodes still apply the old limits. Consensus itself does not impose 80 bytes.</td><td>A protocol limit of 256 bytes per push, enforced by the OP_DROP decoder rather than by any node.</td></tr>
+          <tr><td>Prunability</td><td>Best available. Never in the UTXO set.</td><td>Worse. Each event's reveal creates a spendable P2TR anchor output that does enter the UTXO set until spent.</td></tr>
+          <tr><td>Standardness</td><td>Explicitly recognised by node policy, with a dedicated configuration switch.</td><td>Not recognised by anything. It relies only on ordinary Taproot script-path spending, which is standard, but no node has a concept of OP_DROP.</td></tr>
+          <tr><td>Cost per byte</td><td>4 weight units.</td><td>1 weight unit, so roughly a quarter of the marginal cost, offset by needing a second transaction.</td></tr>
+          <tr><td>Time to readability</td><td>Immediate. The data is in the transaction that confirms.</td><td>Delayed. Nothing is readable until the commit output is spent in the reveal.</td></tr>
+          <tr><td>Payload framing</td><td>None. The bytes are whatever you put there.</td><td>A fixed grammar with a marker, a declared content type, and a digest that must match.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Use OP_RETURN instead</strong> when the payload fits comfortably inside your target relay policy, one transaction matters more than marginal fee, and you want the data visible without a second step.</p>
+
+    <h2 id="envelope">Against witness envelopes</h2>
+    <p>The Ordinals-style envelope wraps content in <code>OP_FALSE OP_IF ... OP_ENDIF</code> inside a Taproot leaf. Execution reaches <code>OP_IF</code>, sees false, and skips everything until <code>OP_ENDIF</code>. The content is committed and provable, and it never touches the stack.</p>
+    <p>OP_DROP and the envelope live in the same place at the same price. The difference is the mechanism and the shape.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Witness envelope against OP_DROP</caption>
+        <thead><tr><th>Dimension</th><th>Witness envelope</th><th>OP_DROP</th></tr></thead>
+        <tbody>
+          <tr><td>Mechanism</td><td>Data is skipped by a conditional branch.</td><td>Data is pushed and removed by an opcode that runs.</td></tr>
+          <tr><td>Conditional opcodes</td><td>Requires <code>OP_IF</code> and <code>OP_ENDIF</code>.</td><td>None. Every element in the leaf executes in order.</td></tr>
+          <tr><td>Chunk size</td><td>520 bytes per push, so fewer opcodes per kilobyte.</td><td>256 bytes per push, so more overhead per kilobyte.</td></tr>
+          <tr><td>Payload size</td><td>Practically unbounded, up to block weight.</td><td>One JSON object of at most 256 bytes for a token event. An optional image attachment chunks up to 256 KiB, at 256 bytes per chunk.</td></tr>
+          <tr><td>Grammar</td><td>Flexible. Fields, metadata, and pointers vary by version and by implementation.</td><td>Fixed. Five fields, a required order, a required digest, and a byte-exact rebuild check.</td></tr>
+          <tr><td>Ecosystem</td><td>Widely indexed and widely supported by wallets and marketplaces.</td><td>Indexed only by Bitcoin Universe.</td></tr>
+          <tr><td>Content addressing</td><td>Content hash is derived by indexers; the envelope does not require one in the script.</td><td>A SHA-256 digest of the payload is a required script field, checked before the payload is accepted.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Use an envelope instead</strong> when the payload is larger than a few hundred bytes, when you need arbitrary content types, or when you need an ecosystem of existing indexers and marketplaces to see your data. Those are the majority of cases.</p>
+
+    <h2 id="stamps">Against Stamps unprunable outputs</h2>
+    <p>Bitcoin Stamps made the opposite trade on purpose. It stores data in outputs that look spendable, so the bytes land in every node's UTXO set and stay there. Pruning a node does not remove them, and no future policy change can make them disappear from the set until someone spends them.</p>
+    <div class="tablewrap">
+      <table>
+        <caption>Stamps against OP_DROP</caption>
+        <thead><tr><th>Dimension</th><th>Stamps</th><th>OP_DROP</th></tr></thead>
+        <tbody>
+          <tr><td>Retention guarantee</td><td>Strongest of the four. Every validating node keeps the bytes in the UTXO set, whether or not it keeps old blocks.</td><td>Weaker. A pruned node discards the block, and with it the witness holding the payload. Recovering an old OP_DROP payload needs an archival node or a copy from an indexer.</td></tr>
+          <tr><td>Externalised cost</td><td>High and permanent, paid by every node operator in UTXO set growth.</td><td>Lower and temporary, except for the one small anchor output per event.</td></tr>
+          <tr><td>Cost to the creator</td><td>4 weight units per byte, plus dust value locked into each data output.</td><td>1 weight unit per byte, plus one anchor output.</td></tr>
+          <tr><td>Readability</td><td>Immediate, from the transaction that confirms.</td><td>Only after the reveal transaction confirms.</td></tr>
+          <tr><td>Node operator reaction</td><td>Openly contested. Some operators consider it abuse of the UTXO set.</td><td>Untested at scale. It has the same profile as any Taproot script-path spend, but it has no track record.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Use Stamps instead</strong> when maximum retention is the requirement and you accept both the cost and the criticism that comes with it.</p>
+
+    <h2 id="worse">Where OP_DROP is worse</h2>
+    <p>Collected in one place, so it does not have to be assembled from the tables above.</p>
+    <ol>
+      <li><strong>Nothing outside Bitcoin Universe reads it.</strong> No third-party wallet, explorer, marketplace, miner, or indexer recognises an OP_DROP event. This is the largest practical drawback and it is not fixable by documentation.</li>
+      <li><strong>It costs about twice an OP_RETURN for a small payload,</strong> because it needs a commit transaction and a reveal transaction. The witness discount only pays off at sizes larger than a token event.</li>
+      <li><strong>It adds to the UTXO set.</strong> Every event's reveal creates a P2TR anchor output. OP_RETURN adds none.</li>
+      <li><strong>256 bytes per push is restrictive.</strong> An envelope chunks at 520. For large content OP_DROP needs roughly twice the pushes and twice the per-chunk overhead.</li>
+      <li><strong>Data is invisible until the reveal.</strong> Anyone watching the commit transaction sees only an ordinary Taproot payment. That is fine for privacy and bad for anyone who wants to read intent from the mempool.</li>
+      <li><strong>Prunability is worse than Stamps and no better than an envelope.</strong> The payload lives in witness data that a pruned node throws away.</li>
+      <li><strong>The ledger profile is narrower than the carrier.</strong> Tickers are exactly four characters, <code>self_mint</code> is rejected, and there are no decimals. A leaf can be a valid carrier and still change no balance.</li>
+      <li><strong>One JSON object per leaf.</strong> There is no batching of several token events into a single reveal, so a five-mint batch is five separate inscriptions.</li>
+      <li><strong>Strict serialization is unforgiving.</strong> A single space, a reordered key, or a numeric instead of a string makes the event invalid. That is deliberate, but it means a careless encoder produces confirmed transactions that do nothing.</li>
+    </ol>
+
+    <h2 id="choose">Choosing</h2>
+    <div class="tablewrap">
+      <table>
+        <caption>Which carrier fits</caption>
+        <thead><tr><th>If you need</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>A small commitment, one transaction, universal tooling</td><td>OP_RETURN</td></tr>
+          <tr><td>Arbitrary content of any size with an existing ecosystem</td><td>A witness envelope</td></tr>
+          <tr><td>Data every node keeps regardless of pruning</td><td>Stamps, accepting the cost</td></tr>
+          <tr><td>A small, strictly framed, self-verifying event with a fixed grammar and no conditional opcodes, inside Bitcoin Universe products</td><td>OP_DROP</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>OP_DROP is not trying to replace the other three. It is a narrow carrier for a narrow job: a compact event with a digest, a fixed shape, a script that is trivial to validate, and a deliberately conservative profile. If your job is wider than that, one of the other three is the better answer.</p>
+
+    <footer class="pagefoot">
+      <dl>
+        <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/op-drop">bitcoinuniverseio/op-drop</a></dd>
+        <dt>Source path</dt><dd>carriers.html</dd>
+        <dt>Spec version</dt><dd>1.0.0</dd>
+        <dt>Lifecycle</dt><dd>experimental</dd>
+        <dt>Chain and network</dt><dd>Bitcoin: mainnet, testnet, signet, regtest</dd>
+        <dt>Last verified</dt><dd>2026-09-01</dd>
+      </dl>
+      <p class="foot-links">
+        <a href="https://github.com/bitcoinuniverseio/op-drop/edit/main/carriers.html">Edit this page on GitHub</a>
+        <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation</a>
+        <a href="llms.txt">llms.txt</a>
+      </p>
+    </footer>
+  </main>
+</div>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

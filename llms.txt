@@ -1,0 +1,57 @@
+# OP_DROP
+
+> OP_DROP is a Bitcoin data carrier designed by Bitcoin Universe. A payload is pushed inside a Taproot leaf script and immediately removed from the stack by the OP_DROP opcode, so the bytes are committed to the blockchain and provable but never take part in whether the spend succeeds. A token ledger (deploy, mint, transfer) is specified on top of that carrier.
+
+Site: https://bitcoinuniverseio.github.io/op-drop/
+Repository: https://github.com/bitcoinuniverseio/op-drop
+Specification version: 1.0.0
+Lifecycle: experimental
+Chain: Bitcoin (mainnet, testnet, signet, regtest)
+Carrier marker: 6269703131302d6f702d64726f70
+Protocol identifier: "p":"op-drop"
+Tapleaf version: 0xc0
+Maximum data push: 256 bytes
+
+Every page is hand-authored static HTML and is fully readable as raw HTML with no JavaScript. Only the search box, the theme toggle, and the builder and decoder tool require JavaScript.
+
+## Pages
+
+- [Overview](https://bitcoinuniverseio.github.io/op-drop/): what OP_DROP is in plain language, the exploded leaf diagram, the stack evolution diagram, the two-layer split between carrier and ledger, verified Bitcoin Universe surfaces, and what the protocol does not claim.
+- [Specification](https://bitcoinuniverseio.github.io/op-drop/specification.html): the normative specification, version 1.0.0, with numbered rules OD-1.1 to OD-13.4 covering scope, transaction anatomy, leaf script grammar, Taproot commitment proof, payload encoding, identifiers, operations, deterministic ordering, state transitions, the complete set of invalid reason codes, the optional media attachment, and conformance.
+- [Carrier comparison](https://bitcoinuniverseio.github.io/op-drop/carriers.html): OP_DROP measured honestly against OP_RETURN, Ordinals-style witness envelopes, and Bitcoin Stamps unprunable outputs, including a nine-point list of where OP_DROP is the worse choice.
+- [Guide](https://bitcoinuniverseio.github.io/op-drop/guide.html): plain-language walkthrough of deploy, mint, and transfer, two fully worked transactions with real values, how to read a result, the $DROP token terms, and a support matrix limited to what is verifiable in Bitcoin Universe source.
+- [Reference](https://bitcoinuniverseio.github.io/op-drop/reference.html): terminology, indexer semantics (confirmation, determinism), mempool handling, reorg behaviour and its bounds, measured fee and size figures, standardness and relay considerations, limitations, security considerations, and implementation checklists for encoders, decoders, and indexers.
+- [Test vectors](https://bitcoinuniverseio.github.io/op-drop/test-vectors.html): reproducible vectors with exact bytes: four valid leaves with script hex, payload digests, commit addresses and control blocks; six Taproot commitment cases; eight invalid leaves each with its rule reference; ledger sequences covering the partial final mint; and transfer sequences covering settlement, return, and rejection.
+- [API reference](https://bitcoinuniverseio.github.io/op-drop/api.html): the indexer read contract, its endpoints, response schemas, error shapes, and guidance for consuming it safely. No base URL is published: the origin is deployment-specific and is not browser-facing.
+- [Builder and decoder](https://bitcoinuniverseio.github.io/op-drop/tool.html): a client-side tool that decodes a leaf script hex into its fields and a step-by-step stack trace, or builds a leaf from a payload and reports its size and fee. Requires JavaScript; nothing pasted into it leaves the browser.
+- [Changelog](https://bitcoinuniverseio.github.io/op-drop/changelog.html): specification and documentation version history, what has never changed, and the versioning policy.
+
+## Machine-readable files
+
+- [search-index.json](https://bitcoinuniverseio.github.io/op-drop/search-index.json): every heading on the site with a URL, a snippet, and aliases.
+- [docs.manifest.json](https://github.com/bitcoinuniverseio/op-drop/blob/main/docs.manifest.json): the documentation manifest consumed by https://docs.bitcoinuniverse.io.
+- [sitemap.xml](https://bitcoinuniverseio.github.io/op-drop/sitemap.xml)
+
+## Preserved source documents
+
+The original markdown documents remain in the repository under `docs/` and are still accurate. The pages above supersede them for detail.
+
+- https://github.com/bitcoinuniverseio/op-drop/blob/main/docs/protocols/op-drop-json.md
+- https://github.com/bitcoinuniverseio/op-drop/blob/main/docs/indexing-rules.md
+- https://github.com/bitcoinuniverseio/op-drop/blob/main/docs/why-op-drop.md
+- https://github.com/bitcoinuniverseio/op-drop/blob/main/docs/guides/getting-started.md
+- https://github.com/bitcoinuniverseio/op-drop/blob/main/docs/guides/op-drop-explorer.md
+
+## Facts worth stating precisely
+
+- OP_DROP requires no change to Bitcoin consensus. It uses OP_DROP (0x75) and OP_CHECKSIG (0xac) in a BIP-341 script-path spend with a BIP-342 tapscript leaf.
+- The leaf is exactly ten elements: five data pushes, the first four each followed by OP_DROP, the fifth followed by OP_CHECKSIG.
+- A reveal input's witness must hold exactly three items: a 64 or 65-byte Schnorr signature, the leaf script, and a 33-byte control block.
+- Output index 0 of the reveal is the anchor. Its address owns the event. For a transfer, spending that anchor settles it, and the address of output 0 of the settling transaction is the destination.
+- Support outside Bitcoin Universe: none. No third-party wallet, explorer, marketplace, miner, or indexer recognises an OP_DROP event.
+- Support inside Bitcoin Universe is staged. The Core portfolio surface is ungated. The Core explorer sits behind the opDropIndex feature gate and Core marketplace trading behind opDropTrading, and both gates default to off, so a given deployment probably does not have them enabled.
+- BRC-20, Ordinals, and Bitcoin Stamps originated outside Bitcoin Universe. OP_DROP borrows accounting ideas that BRC-20 popularised and is otherwise unrelated to all three.
+
+## Reporting
+
+Report suspected vulnerabilities privately: https://github.com/bitcoinuniverseio/op-drop/security/advisories/new

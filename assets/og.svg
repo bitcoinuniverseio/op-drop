@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="OP_DROP: a Bitcoin data carrier that pushes a payload and drops it">
+  <rect width="1200" height="630" fill="#0d141b"/>
+  <g stroke="#1b2733" stroke-width="1">
+    <path d="M0 90h1200M0 540h1200"/>
+  </g>
+  <g font-family="ui-monospace, Menlo, Consolas, monospace">
+    <text x="80" y="60" fill="#56dced" font-size="22" letter-spacing="6">BITCOIN UNIVERSE PROTOCOL</text>
+    <text x="80" y="210" fill="#dde6ee" font-size="96" font-weight="700" letter-spacing="-2">OP_DROP</text>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, Segoe UI, Arial, sans-serif">
+    <text x="80" y="272" fill="#9aabbb" font-size="32">A payload you push, then drop.</text>
+  </g>
+  <g font-family="ui-monospace, Menlo, Consolas, monospace" font-size="20">
+    <rect x="80" y="330" width="300" height="52" fill="#1b2733" stroke="#43576b"/>
+    <text x="98" y="363" fill="#dde6ee">PUSH &lt;payload&gt;</text>
+    <rect x="392" y="330" width="150" height="52" fill="#10333c" stroke="#3fc3d6" stroke-width="2"/>
+    <text x="412" y="363" fill="#56dced">OP_DROP</text>
+    <rect x="554" y="330" width="270" height="52" fill="#1b2733" stroke="#43576b"/>
+    <text x="572" y="363" fill="#dde6ee">PUSH &lt;pubkey&gt;</text>
+    <rect x="836" y="330" width="200" height="52" fill="#1b2733" stroke="#43576b"/>
+    <text x="854" y="363" fill="#dde6ee">OP_CHECKSIG</text>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, Segoe UI, Arial, sans-serif" font-size="22" fill="#9aabbb">
+    <text x="80" y="440">Committed in the witness. Removed from the stack. Never part of the spend condition.</text>
+  </g>
+  <text x="80" y="585" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="20" fill="#56dced">bitcoinuniverseio.github.io/op-drop</text>
+</svg>
