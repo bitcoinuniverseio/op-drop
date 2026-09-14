@@ -56,17 +56,6 @@ flowchart LR
 Each operation has one compact JSON preview. Do not add whitespace, change key
 order, or substitute a different protocol marker.
 
-## Read BIP-110 READY correctly
-
-In the dedicated op-drop workspace, the **BIP-110 READY** badge means the app
-checks the selected op-drop flow before confirmed activity is shown.
-
-There is no selectable BIP-110 checkbox inside the `op-drop` route. This is an
-application-level enforcement choice. It does not activate
-[BIP-110](https://bips.dev/110/), guarantee relay or mining, or make another
-wallet or indexer recognize the event. Read
-[compatibility and scope](bip110-compatibility.md) before relying on the label.
-
 ## Deploy a token
 
 1. Select **Deploy** in `op-drop`.

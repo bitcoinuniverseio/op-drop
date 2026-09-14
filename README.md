@@ -53,7 +53,6 @@ preview the event → sign intentionally → confirm on Bitcoin → verify the r
 | Understand a balance or status | [Confirmed-state rules](docs/indexing-rules.md) |
 | Read the exact event | [Event format](docs/protocols/op-drop-json.md) |
 | Understand the design | [Why OP_DROP](docs/why-op-drop.md) |
-| Understand BIP-110 READY | [BIP-110 and OP_DROP](docs/guides/bip110-compatibility.md) |
 
 ## `$DROP` at a glance
 

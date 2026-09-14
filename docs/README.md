@@ -29,7 +29,6 @@ flowchart LR
 | Understand available, reserved, pending, or invalid | [Confirmed-state rules](indexing-rules.md) |
 | Check the exact text you are signing | [Event format](protocols/op-drop-json.md) |
 | Understand why OP_DROP is different | [Why OP_DROP](why-op-drop.md) |
-| Read the BIP-110 READY badge correctly | [BIP-110 and OP_DROP](guides/bip110-compatibility.md) |
 
 ## The words you will see
 
