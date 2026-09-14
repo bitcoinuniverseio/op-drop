@@ -160,3 +160,7 @@ planned supply. Smaller valid mints are still possible, so actual inscription
 count can differ.
 
 ## 6. Scope
+
+Only confirmed, valid events change balances. Invalid events may be displayed
+with reasons, but do not credit balances. Ordinals and BRC-20 balances are
+independent of this ledger.
