@@ -1,5 +1,7 @@
 # OP_DROP event format
 
+OP_DROP is an application protocol with exact JSON events and confirmed-balance rules.
+
 > **The public contract for the next generation of Bitcoin token events.**
 > Compact JSON gives you something exact to read before signing and recognize
 > again after confirmation.
@@ -15,12 +17,6 @@ or values produce a different event.
 | [Event text](#3-exact-event-text) | The required JSON shape for Deploy, Mint, and Transfer. |
 | [Ledger rules](#4-ledger-rules) | How deployments, supply, mints, and transfers change confirmed state. |
 | [Scope](#6-scope) | What this document does and does not cover. |
-
-`op-drop` is an application protocol, not an Ordinals inscription or BRC-20.
-[BIP-110](https://bips.dev/110/) is a published `Complete` proposal for a
-temporary deployment if activated. This document defines event text and
-confirmed-balance rules. It does not guarantee activation, relay, mining,
-wallet support, marketplace support, or adoption by another indexer.
 
 ## Why this contract matters
 
@@ -164,10 +160,3 @@ planned supply. Smaller valid mints are still possible, so actual inscription
 count can differ.
 
 ## 6. Scope
-
-- Information appears only after the relevant event is confirmed.
-- Do not treat an Ordinals or BRC-20 balance as an `op-drop` balance.
-- An invalid event can be displayed for clarity, but it does not credit a
-  balance.
-- The BIP-110 READY badge does not promise relay, mining, or support by another
-  service.

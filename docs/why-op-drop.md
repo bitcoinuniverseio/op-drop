@@ -91,25 +91,6 @@ A transfer does not instantly disappear from the sender and magically appear
 at the recipient. OP_DROP shows the intermediate reserved state, then either
 settles the units at the destination or returns them if settlement is invalid.
 
-## BIP-110 compatibility
-
-Bitcoin proposals such as BIP-110 focus on reducing oversized or ambiguous data
-patterns. OP_DROP uses compact events, a limited transaction profile, no large
-data requirement, and a ledger derived from confirmed events.
-
-```mermaid
-flowchart LR
-  A[BIP-110-style limits] --> B[Keep event data compact]
-  B --> C[Use a narrow OP_DROP profile]
-  C --> D[Validate before counting]
-  D --> E[Give users a clear confirmed record]
-```
-
-This is not a claim that BIP-110 is active or that OP_DROP can activate it.
-It is a design choice: make OP_DROP useful in a Bitcoin environment that values
-small, well-defined activity. Read [BIP-110 and OP_DROP](guides/bip110-compatibility.md)
-for the actual limits and scope.
-
 ## Relationship to Ordinals and BRC-20
 
 OP_DROP is not an Ordinals or BRC-20 clone. It provides a separate confirmed
