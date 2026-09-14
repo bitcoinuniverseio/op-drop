@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "op-drop",
+  "name": "OP_DROP",
+  "classification": "protocol",
+  "repository": "bitcoinuniverseio/op-drop",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/op_drop/",
+  "docsRoot": "docs",
+  "sourceRef": "main",
+  "lifecycle": "experimental",
+  "chains": [
+    {
+      "chain": "bitcoin",
+      "networks": ["mainnet", "testnet", "signet", "regtest"]
+    }
+  ],
+  "protocols": ["op-drop"],
+  "audiences": [
+    "protocol-implementer",
+    "app-developer",
+    "indexer-operator",
+    "user",
+    "security-verifier"
+  ],
+  "specifications": [
+    "specification.html",
+    "test-vectors.html",
+    "docs/protocols/op-drop-json.md",
+    "docs/indexing-rules.md"
+  ],
+  "owners": ["bitcoinuniverseio"],
+  "lastVerified": {
+    "commit": "066fd459f1127c24ba79cb832ebd8c4fe3410200",
+    "timestamp": "2026-09-01T00:00:00Z"
+  },
+  "securityClassification": "public"
+}

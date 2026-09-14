@@ -1,0 +1,392 @@
+{
+  "site": "OP_DROP protocol documentation",
+  "specVersion": "1.0.0",
+  "generated": "2026-09-14",
+  "entries": [
+    {
+      "page": "Overview",
+      "heading": "A payload you push, then drop",
+      "url": "index.html",
+      "text": "OP_DROP carries data inside a Taproot leaf script. The payload is pushed onto the stack as an ordinary data push and the next opcode, OP_DROP, removes it again.",
+      "aliases": ["op_drop", "op-drop", "opdrop", "op drop", "what is op_drop", "introduction", "overview", "home", "data carrier", "bitcoin universe"]
+    },
+    {
+      "page": "Overview",
+      "heading": "The mechanism",
+      "url": "index.html#mechanism",
+      "text": "A leaf script pushes five fields and runs OP_DROP after each of the first four. What is left is a public key and a signature check, so the leaf spends like an ordinary key path.",
+      "aliases": ["mechanism", "how it works", "exploded view", "leaf parts", "0x75"]
+    },
+    {
+      "page": "Overview",
+      "heading": "The stack, step by step",
+      "url": "index.html#stack",
+      "text": "The witness supplies the signature first, then the leaf script runs. The payload occupies the stack for exactly one opcode before OP_DROP removes it.",
+      "aliases": ["stack", "stack evolution", "script stack", "push and drop", "stack machine"]
+    },
+    {
+      "page": "Overview",
+      "heading": "Why build another carrier",
+      "url": "index.html#why",
+      "text": "OP_DROP puts the payload in the witness for the discount, inside code that executes, with no conditional branch anywhere in the script.",
+      "aliases": ["why", "rationale", "motivation", "design goal"]
+    },
+    {
+      "page": "Overview",
+      "heading": "Two layers, one name",
+      "url": "index.html#two-layers",
+      "text": "The carrier layer fixes the leaf script grammar and is selected by 6269703131302d6f702d64726f70. The ledger layer fixes what the JSON means and is identified by p equals op-drop.",
+      "aliases": ["layers", "carrier vs ledger", "6269703131302d6f702d64726f70", "marker", "carrier marker", "protocol identifier"]
+    },
+    {
+      "page": "Overview",
+      "heading": "Bitcoin Universe surfaces",
+      "url": "index.html#products",
+      "text": "Inscribe workspace, Core explorer, Core portfolio, and a feature-gated Core marketplace. Nothing outside Bitcoin Universe reads OP_DROP.",
+      "aliases": ["support", "products", "wallets", "marketplace", "explorer", "portfolio", "inscribe"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Scope and layering",
+      "url": "specification.html#scope",
+      "text": "Rules OD-1.1 to OD-1.5. The carrier layer and the ledger layer are separate. A leaf can parse correctly and still change no balance.",
+      "aliases": ["scope", "od-1", "layering", "normative", "spec"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Transaction anatomy",
+      "url": "specification.html#anatomy",
+      "text": "Rules OD-3.1 to OD-3.6. Exactly three witness items, a 33-byte control block, a P2TR previous output, and output index 0 as the anchor.",
+      "aliases": ["anatomy", "commit reveal", "witness items", "control block", "anchor", "vout 0", "output 0", "od-3"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Leaf script grammar",
+      "url": "specification.html#script",
+      "text": "Rules OD-4.1 to OD-4.9. Ten elements: marker, content type, digest, payload, public key, each followed by OP_DROP except the last which is OP_CHECKSIG.",
+      "aliases": ["script", "grammar", "leaf", "tapscript", "encoding", "minimal push", "pushdata", "op_checksig", "od-4"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Taproot commitment proof",
+      "url": "specification.html#commitment",
+      "text": "Rules OD-5.1 to OD-5.4. Leaf version 0xc0, Merkle root from the control block, key parity, and the output key must match the spent output.",
+      "aliases": ["taproot", "commitment", "bip341", "bip342", "tapleaf", "0xc0", "merkle", "parity", "od-5"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Payload encoding",
+      "url": "specification.html#payload",
+      "text": "Rules OD-6.1 to OD-6.13. Compact UTF-8 JSON, string values only, fixed key order, four-character tick, positive integer strings with no leading zero.",
+      "aliases": ["payload", "json", "encoding", "tick", "amt", "max", "lim", "keys", "key order", "serialization", "od-6"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Identifiers",
+      "url": "specification.html#identifiers",
+      "text": "Rules OD-7.1 to OD-7.5. A reveal event id is txid colon i vin colon w1. A settlement event id is txid colon s vin colon the transfer event id.",
+      "aliases": ["identifiers", "event id", "eventid", "anchor id", "naming", "od-7"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Operations",
+      "url": "specification.html#operations",
+      "text": "Rules OD-8.1 to OD-8.7. Deploy, mint, and transfer. First valid deploy wins. Credited equals the smaller of the requested amount and the remaining supply.",
+      "aliases": ["operations", "deploy", "mint", "transfer", "partial mint", "final mint", "supply", "od-8"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Deterministic ordering",
+      "url": "specification.html#ordering",
+      "text": "Rules OD-9.1 to OD-9.4. Block height, then transaction index, then operation index. Settlements apply before reveal leaves inside a transaction.",
+      "aliases": ["ordering", "deterministic", "operation index", "phase", "sort order", "od-9"]
+    },
+    {
+      "page": "Specification",
+      "heading": "State transitions",
+      "url": "specification.html#ledger",
+      "text": "Rules OD-10.1 to OD-10.8. Available and reserved balances, the two-stage transfer, settlement to output 0, and the return path when no destination exists.",
+      "aliases": ["state", "balances", "available", "reserved", "transferable", "settlement", "return", "holder", "od-10"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Invalid conditions",
+      "url": "specification.html#invalid",
+      "text": "Every reason code and the exact condition that produces it: invalid_taproot_commitment, invalid_anchor, ambiguous_transfer_anchor, missing_transfer_source_authorization, invalid_transfer_destination, unsupported_profile, unsupported_self_mint, duplicate_deploy, unknown_tick, mint_limit_exceeded, supply_exhausted, insufficient_available_balance.",
+      "aliases": ["invalid", "reason", "reason codes", "errors", "rejected", "duplicate_deploy", "unknown_tick", "supply_exhausted", "mint_limit_exceeded", "od-11"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Optional media attachment",
+      "url": "specification.html#media",
+      "text": "Rules OD-12.1 to OD-12.6. A deploy may append a drops-media image up to 256 KiB, chunked at 256 bytes, each chunk followed by OP_DROP.",
+      "aliases": ["media", "image", "drops-media", "attachment", "png", "jpeg", "webp", "gif", "token image", "od-12"]
+    },
+    {
+      "page": "Specification",
+      "heading": "Conformance",
+      "url": "specification.html#conformance",
+      "text": "Rules OD-13.1 to OD-13.4. An implementation conforms when it reaches the same decision, reason code, and balances as the test vectors.",
+      "aliases": ["conformance", "compliance", "brc-20", "brc20", "relationship to brc-20", "od-13"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Where the bytes live",
+      "url": "carriers.html#where",
+      "text": "OP_RETURN puts data in an output script at four weight units per byte. Witness envelopes and OP_DROP put it in the witness at one. Stamps puts it in the UTXO set.",
+      "aliases": ["comparison", "carriers", "where bytes live", "weight units", "witness discount"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Property matrix",
+      "url": "carriers.html#matrix",
+      "text": "Data location, weight per byte, transactions needed, UTXO set impact, prunability, payload size, whether data executes, and ecosystem tooling.",
+      "aliases": ["matrix", "properties", "prunable", "prunability", "utxo set", "table"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Cost, worked out",
+      "url": "carriers.html#cost",
+      "text": "The same 54-byte payload priced four ways. OP_RETURN about 165 vB in one transaction, OP_DROP about 315 vB across two, an envelope about 310 vB, Stamps about 230 vB plus permanent UTXO cost.",
+      "aliases": ["cost", "price", "fees comparison", "vbytes", "vsize"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Against OP_RETURN",
+      "url": "carriers.html#opreturn",
+      "text": "OP_RETURN is provably unspendable so it never enters the UTXO set. It is the better choice for a small payload in one transaction.",
+      "aliases": ["op_return", "opreturn", "op return", "datacarrier", "datacarriersize", "80 bytes", "83 bytes"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Against witness envelopes",
+      "url": "carriers.html#envelope",
+      "text": "The Ordinals-style envelope wraps content in OP_FALSE OP_IF and OP_ENDIF so it is skipped. OP_DROP executes the push and the drop and uses no conditional opcode.",
+      "aliases": ["envelope", "ordinals", "inscription", "op_if", "op_false", "520 bytes", "chunking"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Against Stamps unprunable outputs",
+      "url": "carriers.html#stamps",
+      "text": "Stamps stores data in outputs that stay in the UTXO set, giving the strongest retention at the highest externalised cost.",
+      "aliases": ["stamps", "bitcoin stamps", "src-20", "src20", "unprunable", "multisig", "p2ms"]
+    },
+    {
+      "page": "Carrier comparison",
+      "heading": "Where OP_DROP is worse",
+      "url": "carriers.html#worse",
+      "text": "No external tooling, roughly twice the cost of an OP_RETURN for a small payload, it adds a UTXO, 256-byte pushes, invisible until the reveal, and a narrower ledger profile than the carrier.",
+      "aliases": ["drawbacks", "downsides", "worse", "limitations", "criticism", "tradeoffs"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Three operations",
+      "url": "guide.html#three",
+      "text": "Deploy defines a token, mint requests units under existing rules, transfer moves units you already hold in two confirmed steps.",
+      "aliases": ["guide", "getting started", "how to", "deploy mint transfer", "tutorial"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Worked example: a mint, end to end",
+      "url": "guide.html#mint-example",
+      "text": "Minting 1000 drop: the 54-byte event, the 158-byte leaf, the commit address, the reveal witness, and the result.",
+      "aliases": ["worked example", "mint example", "walkthrough", "end to end", "commit address"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Worked example: a transfer",
+      "url": "guide.html#transfer-example",
+      "text": "Moving 250 units: reserve on the reveal, then settle by spending the anchor. Output 0 of the settling transaction is the destination.",
+      "aliases": ["transfer example", "settlement", "anchor spend", "reserved units", "destination"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Reading a result",
+      "url": "guide.html#reading",
+      "text": "Pending, warming up, valid, transfer_pending, settled, invalid with a reason, and no token found: what each one means and what to do.",
+      "aliases": ["status", "statuses", "result", "pending", "warming up", "no token found"]
+    },
+    {
+      "page": "Guide",
+      "heading": "The $DROP token",
+      "url": "guide.html#drop",
+      "text": "$DROP is the display label for wire ticker drop. Maximum supply 21,000,000, limit 1,000 per mint, 21,000 full-limit mints, no decimals.",
+      "aliases": ["$drop", "drop", "dollar drop", "ticker", "21000000", "21 million", "token terms", "supply"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Support matrix",
+      "url": "guide.html#support",
+      "text": "Inscribe workspace wired for deploy, mint, and transfer. Core portfolio wired. Core explorer feature-gated behind opDropIndex and Core marketplace behind opDropTrading, both off by default. Selling unsupported. No third-party support.",
+      "aliases": ["support matrix", "wallet support", "marketplace support", "opdroptrading", "opdropindex", "feature gate", "gated", "compatibility"]
+    },
+    {
+      "page": "Guide",
+      "heading": "Staying in control",
+      "url": "guide.html#safety",
+      "text": "Never enter a seed phrase, read the exact JSON before approving, check output ordering for a transfer, and treat pending as not a balance.",
+      "aliases": ["safety", "security tips", "seed phrase", "signing", "approval"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Terminology",
+      "url": "reference.html#terms",
+      "text": "Carrier marker, protocol identifier, leaf script, control block, anchor, owner, available, reserved, transferable, total, event id, minted, remaining, holder.",
+      "aliases": ["terminology", "glossary", "definitions", "terms", "vocabulary"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Indexer semantics",
+      "url": "reference.html#indexing",
+      "text": "Confirmation depth is per deployment, the mainnet floor is one confirmation and the reference configuration uses six. A single writer scans, replicas serve committed state.",
+      "aliases": ["indexer", "indexing", "confirmation", "confirmations", "depth", "finality", "scanner", "cursor"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Mempool",
+      "url": "reference.html#mempool",
+      "text": "The ledger never includes mempool. Provisional tracking reports mempool, mined, or finalized and never affects balances.",
+      "aliases": ["mempool", "unconfirmed", "provisional", "pending transaction", "zero conf"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Reorg behaviour",
+      "url": "reference.html#reorg",
+      "text": "Automatic recovery is bounded: 24 blocks by default, up to 144, and 100,000 rebuilt rows. Deeper divergence needs an authenticated operator replay.",
+      "aliases": ["reorg", "reorganisation", "reorganization", "rollback", "chain split", "recovery", "replay"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Fee and size",
+      "url": "reference.html#fees",
+      "text": "Reveal sizes: deploy 164 vB, mint 160 vB, transfer 160 vB. Weight is base bytes times four plus two plus witness bytes. Budget for the commit transaction as well.",
+      "aliases": ["fees", "fee", "size", "vsize", "vbytes", "weight", "cost", "sat/vb", "dust", "330"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Standardness and relay",
+      "url": "reference.html#standardness",
+      "text": "An OP_DROP transaction is an ordinary Taproot script-path spend. No special policy applies, standard weight and dust limits do, and relay is per node.",
+      "aliases": ["standardness", "relay", "policy", "non-standard", "mining", "propagation", "dust threshold"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Limitations",
+      "url": "reference.html#limits",
+      "text": "One event per leaf, 256 bytes per push, four-character tickers, no decimals, no self-mint, output 0 sensitivity, one transfer per transaction, no third-party support.",
+      "aliases": ["limitations", "limits", "constraints", "restrictions", "what it cannot do"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Security considerations",
+      "url": "reference.html#security",
+      "text": "The payload is permanent and public, the key in the leaf must be yours, output 0 discipline matters, anchor control is settlement control, and deploys can be front-run.",
+      "aliases": ["security", "threat model", "risks", "front running", "attack", "vulnerability", "key handling"]
+    },
+    {
+      "page": "Reference",
+      "heading": "Implementation checklist",
+      "url": "reference.html#checklist",
+      "text": "Separate checklists for an encoder, a decoder, and an indexer, each testable against the test vectors.",
+      "aliases": ["checklist", "implementation", "how to implement", "build an indexer", "conformance steps"]
+    },
+    {
+      "page": "Test vectors",
+      "heading": "Valid leaves",
+      "url": "test-vectors.html#valid",
+      "text": "V1 deploy drop, V2 mint 1000, V3 transfer 250, V4 the largest possible deploy payload, each with script hex, digest, commit address, and control block.",
+      "aliases": ["test vectors", "vectors", "examples", "hex", "script hex", "digest", "sha256", "v1", "v2", "v3"]
+    },
+    {
+      "page": "Test vectors",
+      "heading": "Commitment vectors",
+      "url": "test-vectors.html#taproot",
+      "text": "T1 to T6: valid commitment, wrong previous output, non-P2TR previous output, wrong leaf version, a 65-byte control block, and a four-item witness.",
+      "aliases": ["commitment vectors", "taproot vectors", "control block tests", "negative tests"]
+    },
+    {
+      "page": "Test vectors",
+      "heading": "Invalid leaves",
+      "url": "test-vectors.html#invalid",
+      "text": "I1 non-minimal push, I2 unknown marker, I3 digest mismatch, I4 reordered keys, I5 whitespace, I6 five-character ticker, I7 a conditional opcode, I8 carrier valid but ledger invalid.",
+      "aliases": ["invalid vectors", "failure cases", "self_mint", "selfmint", "rejected scripts"]
+    },
+    {
+      "page": "Test vectors",
+      "heading": "Ledger sequences",
+      "url": "test-vectors.html#ledger",
+      "text": "Supply arithmetic including the partial final mint: a request of 30 against a remaining supply of 10 is valid and credits 10.",
+      "aliases": ["ledger sequence", "supply arithmetic", "partial mint", "duplicate deploy", "exhausted"]
+    },
+    {
+      "page": "Test vectors",
+      "heading": "Transfer sequences",
+      "url": "test-vectors.html#transfer",
+      "text": "X1 a transfer that settles, X2 a transfer that returns because output 0 yields no address, X3 rejected transfers including ambiguous anchors.",
+      "aliases": ["transfer vectors", "settle", "return", "ambiguous anchor", "insufficient balance"]
+    },
+    {
+      "page": "API reference",
+      "heading": "Service boundary",
+      "url": "api.html#boundary",
+      "text": "The indexer owns confirmed-chain scanning and ledger state. Browsers must never call it directly; a first-party backend holds the origin.",
+      "aliases": ["api", "http", "rest", "endpoints", "service", "boundary", "integration"]
+    },
+    {
+      "page": "API reference",
+      "heading": "Endpoints",
+      "url": "api.html#endpoints",
+      "text": "GET /op-drop/health, /op-drop/launch/drop, /op-drop/tokens, /op-drop/tokens/{tick}, /op-drop/balances/{address}, /op-drop/events, /op-drop/indexer/status.",
+      "aliases": ["endpoints", "routes", "get", "tokens", "balances", "events", "status", "launch manifest"]
+    },
+    {
+      "page": "API reference",
+      "heading": "Response schemas",
+      "url": "api.html#schemas",
+      "text": "Deployment, balances, event, and indexer status field by field. Amounts are always decimal strings, never JSON numbers.",
+      "aliases": ["schema", "schemas", "response", "fields", "json response", "decimal strings", "precision"]
+    },
+    {
+      "page": "API reference",
+      "heading": "Consuming safely",
+      "url": "api.html#consuming",
+      "text": "Keep the origin server-side, treat amounts as strings, check freshness, handle reversal, and verify what matters against block data.",
+      "aliases": ["consuming", "client", "best practices", "integration guidance"]
+    },
+    {
+      "page": "Builder and decoder",
+      "heading": "Decoder",
+      "url": "tool.html#decode",
+      "text": "Paste a leaf script hex to see the pushed payload, the decoded fields, the stack evolution step by step, and the reveal size.",
+      "aliases": ["tool", "decoder", "decode", "parser", "paste script", "interactive", "validator"]
+    },
+    {
+      "page": "Builder and decoder",
+      "heading": "Builder",
+      "url": "tool.html#build",
+      "text": "Choose an operation and a ticker, supply an x-only key, and get the exact leaf script hex with its digest and fee estimate.",
+      "aliases": ["builder", "build", "encoder", "generate script", "create leaf", "fee estimate"]
+    },
+    {
+      "page": "Builder and decoder",
+      "heading": "What these tools do not check",
+      "url": "tool.html#limits",
+      "text": "The Taproot commitment, ledger state, the anchor and settlement, and the media attachment are all outside the reach of a leaf-only tool.",
+      "aliases": ["tool limits", "not checked", "caveats"]
+    },
+    {
+      "page": "Changelog",
+      "heading": "Specification 1.0.0",
+      "url": "changelog.html#v1",
+      "text": "First numbered publication of the specification, 2026-09-01. No wire format change: every previously valid leaf is still valid.",
+      "aliases": ["changelog", "version", "history", "releases", "1.0.0", "versioning"]
+    },
+    {
+      "page": "Changelog",
+      "heading": "Versioning policy",
+      "url": "changelog.html#policy",
+      "text": "Major means a validity or balance change, minor means an ignorable optional capability, patch means clarification. There is no version field in the payload.",
+      "aliases": ["versioning", "semver", "policy", "breaking change"]
+    }
+  ]
+}

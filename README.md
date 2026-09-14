@@ -1,71 +1,151 @@
 # OP_DROP
 
-<p align="center">
-  <strong>Bitcoin-native token actions you can read before signing and verify after confirmation.</strong><br />
-  Compact events. Exact rules. Visible state.
-</p>
+**A Bitcoin data carrier that pushes a payload and then drops it.**
 
-OP_DROP turns deploy, mint, and transfer intent into one small event, checks it against its Bitcoin transaction, and applies it to a public confirmed-state record. Pending activity stays pending. Invalid activity stays out of balances. Transfers remain visible from reservation through settlement.
+Documentation site: <https://bitcoinuniverseio.github.io/op-drop/>
 
-The production read path is served by API-only replicas backed by one
-transactional ledger. A separate single-writer scanner verifies finalized
-blocks against two independently operated Bitcoin nodes. Maintenance and
-catch-up can therefore continue without presenting partial scanner work as
-confirmed state.
+OP_DROP carries data inside a Taproot leaf script. The payload is pushed onto the
+stack as an ordinary data push, and the very next opcode, `OP_DROP`, removes it
+again. The bytes are committed to the blockchain and provable, but they never take
+part in whether the spend succeeds. What is left at the end of the leaf is a public
+key and a signature check, so the script spends exactly like a plain key path.
+
+OP_DROP is one of the protocols Bitcoin Universe designed rather than adopted.
 
 ```text
-preview the event → sign intentionally → confirm on Bitcoin → verify the result
+PUSH <6269703131302d6f702d64726f70>      OP_DROP
+PUSH "application/json"    OP_DROP
+PUSH <sha256(payload)>     OP_DROP
+PUSH <payload>             OP_DROP
+PUSH <x-only public key>   OP_CHECKSIG
 ```
 
-## Why OP_DROP feels different
+## At a glance
 
-| What you need | What OP_DROP gives you |
+| | |
 | --- | --- |
-| Know what you are approving | One exact, human-readable JSON event before signing. |
-| Know when an action counts | Supply and balances change only after confirmation and validation. |
-| Know where transferred units are | Available, reserved, settled, and returned states remain visible. |
-| Know why something failed | Invalid events can show a reason without changing balances. |
-| Know which record to trust | Explorer and Portfolio follow the same deterministic chain order and rules. |
+| Chain | Bitcoin: mainnet, testnet, signet, regtest |
+| Lifecycle | Experimental |
+| Specification version | 1.0.0 |
+| Carrier marker (hex) | `6269703131302d6f702d64726f70` (script only, never a user-facing name) |
+| Protocol identifier | `"p":"op-drop"` |
+| Tapleaf version | `0xc0` |
+| Maximum data push | 256 bytes |
+| Operations | `deploy`, `mint`, `transfer` |
+| Consensus change required | None |
 
-## Three actions
+## Two layers
 
-| Action | What it means | Confirmed result |
-| --- | --- | --- |
-| **Deploy** | Define a four-character ticker, maximum supply, and mint limit. | The first valid confirmed deploy for that ticker establishes its rules. |
-| **Mint** | Request units under an active token's rules. | Valid units become available at the event address. |
-| **Transfer** | Move confirmed available units onward. | Units reserve first, then settle at the destination or return if settlement is invalid. |
+OP_DROP is specified as two layers, and the difference matters.
 
-## Your OP_DROP journey
+- The **carrier** fixes the leaf script grammar, the Taproot commitment proof, and
+  the 256-byte push bound. A leaf either parses or it does not.
+- The **ledger** fixes what the carried JSON means: deploy, mint, transfer, supply
+  accounting, and balances.
 
-1. Open the dedicated **OP_DROP** workspace.
-2. Choose **Deploy**, **Mint**, or **Transfer**.
-3. Review the exact event, network, destination, amount, and fee.
-4. Approve only in a wallet you trust.
-5. Wait for confirmation.
-6. Check **Explorer** for the event and **Portfolio** for the address balance.
+A leaf can be a perfectly valid carrier and still change no balance, because the
+ledger applies a narrower profile on top. The published test vectors include a case
+that passes one layer and fails the other.
 
-## Start where you are
+## Start here
 
-| I want to… | Start here |
+| You want to | Read |
 | --- | --- |
-| Make my first action | [Get started](docs/guides/getting-started.md) |
-| Check a token, event, or address | [Explorer and Portfolio](docs/guides/op-drop-explorer.md) |
-| Understand a balance or status | [Confirmed-state rules](docs/indexing-rules.md) |
-| Read the exact event | [Event format](docs/protocols/op-drop-json.md) |
-| Understand the design | [Why OP_DROP](docs/why-op-drop.md) |
+| Understand the idea | [Overview](https://bitcoinuniverseio.github.io/op-drop/) |
+| Implement an encoder, decoder, or indexer | [Specification](https://bitcoinuniverseio.github.io/op-drop/specification.html) |
+| Know how it compares to OP_RETURN, envelopes, and Stamps | [Carrier comparison](https://bitcoinuniverseio.github.io/op-drop/carriers.html) |
+| Deploy, mint, or transfer | [Guide](https://bitcoinuniverseio.github.io/op-drop/guide.html) |
+| Run an indexer | [Reference](https://bitcoinuniverseio.github.io/op-drop/reference.html) |
+| Check your implementation | [Test vectors](https://bitcoinuniverseio.github.io/op-drop/test-vectors.html) |
+| Consume the read API | [API reference](https://bitcoinuniverseio.github.io/op-drop/api.html) |
+| Decode a leaf script right now | [Builder and decoder](https://bitcoinuniverseio.github.io/op-drop/tool.html) |
 
-## `$DROP` at a glance
+The original markdown documents are preserved and remain accurate:
+[event format](docs/protocols/op-drop-json.md),
+[indexing rules](docs/indexing-rules.md),
+[design rationale](docs/why-op-drop.md),
+[getting started](docs/guides/getting-started.md),
+[explorer and portfolio](docs/guides/op-drop-explorer.md).
+The site pages supersede them for detail.
 
-`$DROP` is the display name for ticker `drop`.
+## The three payloads
+
+```json
+{"p":"op-drop","op":"deploy","tick":"drop","max":"21000000","lim":"1000"}
+{"p":"op-drop","op":"mint","tick":"drop","amt":"1000"}
+{"p":"op-drop","op":"transfer","tick":"drop","amt":"250"}
+```
+
+Compact UTF-8, string values only, fixed key order, no whitespace. A single space or
+a reordered key produces a different and invalid event. Tickers are exactly four
+lowercase ASCII letters or digits. There are no decimals.
+
+## `$DROP`
+
+`$DROP` is a display label for the wire ticker `drop`.
 
 | Term | Value |
 | --- | ---: |
 | Maximum supply | 21,000,000 whole units |
-| Maximum mint | 1,000 units per valid mint event |
-| Decimal places | None |
+| Limit per mint event | 1,000 |
+| Full-limit mint count | 21,000 |
+| Decimal places | none |
 
-These terms affect state only after the `drop` deploy event is confirmed and accepted.
+These are protocol terms. They are not a price, an availability promise, or evidence
+that a deployment exists on any network. A deployment exists only after its exact
+deploy event confirms and is accepted.
 
-## Stay in control
+## Support
 
-Never enter a seed phrase or private key into an OP_DROP page. Read the exact JSON preview and every wallet detail before approval. A preview, signature, or pending transaction is not a confirmed balance. Bitcoin transactions are difficult to reverse once confirmed, and another wallet or service may interpret token activity differently, use OP_DROP Explorer and Portfolio for this protocol's confirmed view.
+Support claimed anywhere in this repository is limited to what can be verified in
+Bitcoin Universe's own source: the Inscribe workspace (deploy, mint, transfer), the
+Core portfolio, a feature-gated Core explorer, and a feature-gated Core marketplace
+in external-execution mode where selling is explicitly unsupported. The explorer and
+marketplace gates both default to off, so assume a deployment does not have them
+enabled unless you can see that it does.
+
+Nothing outside Bitcoin Universe reads OP_DROP. No third-party wallet, explorer,
+marketplace, miner, or indexer recognises an OP_DROP event.
+
+## Scope and honesty
+
+- OP_DROP requires no change to Bitcoin consensus.
+- It is not an Ordinals inscription and not BRC-20. It borrows accounting ideas that
+  BRC-20 popularised, and BRC-20 originated outside this organisation.
+- No claim is made that any node will relay or mine an OP_DROP transaction.
+- The [carrier comparison](https://bitcoinuniverseio.github.io/op-drop/carriers.html)
+  lists nine places where OP_DROP is the worse choice.
+
+## This repository
+
+| Path | Contents |
+| --- | --- |
+| `index.html` and the other root pages | The documentation site, published by GitHub Pages from `main`. |
+| `assets/` | Stylesheet, search, and the client-side builder and decoder. |
+| `docs/` | The preserved markdown documents. |
+| `scripts/validate-docs.ps1` | Markdown link and style validation. |
+| `docs.manifest.json` | The manifest consumed by <https://docs.bitcoinuniverse.io>. |
+
+The site is hand-authored static HTML and CSS with a small amount of vanilla
+JavaScript. There is no build step, no framework, no CDN, no external font, and no
+tracker. Every page is fully readable with JavaScript disabled.
+
+### Local preview
+
+```sh
+python3 -m http.server 8000
+```
+
+Then open <http://localhost:8000/>.
+
+### Validation
+
+```powershell
+pwsh scripts/validate-docs.ps1
+```
+
+## Contributing, support, security
+
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SUPPORT.md](SUPPORT.md)
+- [SECURITY.md](SECURITY.md): report vulnerabilities privately, never in a public issue.
