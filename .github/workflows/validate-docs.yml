@@ -1,0 +1,19 @@
+name: Validate documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-docs:
+    runs-on: [self-hosted, Linux, X64, universe]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Markdown links and style
+        shell: pwsh
+        run: ./scripts/validate-docs.ps1
